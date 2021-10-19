@@ -1,3 +1,14 @@
+# This App using Tauri
+
+see
+
+[Tauri Official Setup](https://tauri.studio/en/docs/getting-started/setup-linux),
+
+[Tauri with React](https://kent.medium.com/get-started-making-desktop-apps-using-rust-and-react-78a7e07433ce),
+
+for WSL2, 
+[VcXsrv X-Server](https://sourceforge.net/projects/vcxsrv/)
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
