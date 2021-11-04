@@ -1,8 +1,8 @@
 [package]
 name = "app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Notex"
+authors = ["tfukuda"]
 license = ""
 repository = ""
 default-run = "app"
@@ -21,6 +21,7 @@ tauri = { version = "1.0.0-beta.8", features = ["api-all"] }
 chrono = "0.4"
 sha2 = "0.9.8"
 dirs = "4.0.0"
+whoami = "1.1.5"
 
 [features]
 default = [ "custom-protocol" ]

@@ -4,8 +4,8 @@ import React, {
   createContext,
   useMemo,
   useEffect,
+  useRef,
 } from "react";
-import { Close } from "@material-ui/icons";
 
 const ModalContext = createContext([() => {}, false, () => {}, () => {}] as [
   React.Dispatch<React.SetStateAction<any>>,
@@ -14,47 +14,33 @@ const ModalContext = createContext([() => {}, false, () => {}, () => {}] as [
   () => void
 ]);
 
-export const useModalInner = () => {
+export const ModalContextProvider: React.FC = ({ children }) => {
   const [hidden, setHidden] = useState(true);
-  const [ref, set] = useState<JSX.Element | null>(null);
+  const [modal, setModal] = useState<JSX.Element | null>(null);
   const call = (modalContents: JSX.Element, handler: () => void) => {
     setHidden(false);
-    set(modalContents);
+    setModal(modalContents);
     handler();
   };
   const exit = () => {
     setHidden(true);
-    set(null);
+    setModal(null);
   };
-
-  return {
-    hidden: hidden,
-    contentsRef: ref,
-    set: set,
-    call: call,
-    exit: exit,
-  };
-};
-
-export const ModalContextProvider: React.FC = ({ children }) => {
-  const { contentsRef, hidden, call, exit, set } = useModalInner();
   const value: [
     React.Dispatch<React.SetStateAction<JSX.Element | null>>,
     boolean,
     (modalContents: JSX.Element, handler: () => void) => void,
     () => void
-  ] = useMemo(() => [set, hidden, call, exit], []);
+  ] = [setModal, hidden, call, exit];
 
   return (
     <ModalContext.Provider value={value}>
-      <div className={"overlay" + (hidden ? " hidden" : "")}>
-        <div className={"modal"}>
-          <div className={"modal-controller"}>
-            <button onClick={exit}>
-              <Close />
-            </button>
-          </div>
-          <div className={"modal-contents"}>{contentsRef}</div>
+      <div
+        className={"overlay" + (hidden ? " hidden" : "")}
+        onClick={() => exit()}
+      >
+        <div className={"modal"} onClick={(e) => e.stopPropagation()}>
+          <div className={"modal-contents"}>{modal}</div>
         </div>
       </div>
       {children}
@@ -62,30 +48,28 @@ export const ModalContextProvider: React.FC = ({ children }) => {
   );
 };
 
-const useModal = (
-  modalContents: JSX.Element,
-  deps: unknown[],
-  onCall?: () => void
-) => {
-  const [set, hidden, innerCall, exit] = useContext(ModalContext);
+const useModal = (deps: unknown[], onCall?: () => void) => {
+  const contents = useRef<JSX.Element | null>(null);
+  const [setModal, hidden, innerCall, exit] = useContext(ModalContext);
 
+  /**
+   * once setModal set, never change it and no need to add deps
+   */
   useEffect(() => {
-    console.log(hidden, modalContents);
-    if (hidden) set(modalContents);
-    else set(null);
+    if (hidden) setModal(contents.current);
+    else setModal(null);
+    //eslint-disable-next-line
   }, [hidden, ...deps]);
 
   return [
-    set,
+    (jsx: JSX.Element) => {
+      contents.current = jsx;
+    },
     hidden,
-    () => innerCall(modalContents, onCall ? onCall : () => {}),
+    () =>
+      innerCall(contents.current ?? <React.Fragment />, onCall ?? (() => {})),
     exit,
-  ] as [
-    React.Dispatch<React.SetStateAction<any>>,
-    boolean,
-    () => void,
-    () => void
-  ];
+  ] as [(jsx: JSX.Element) => void, boolean, () => void, () => void];
 };
 
 export default useModal;

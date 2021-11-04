@@ -1,33 +1,39 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+/**
+ * there may not need to save setting as state = request every time
+ * then, only type required
+ */
+
 type KeyBindings = {
   [key: string]: any;
 };
 
-const languages = ["japanese", "english"] as const;
+export const languages = ["japanese", "english"] as const;
 export type Language = typeof languages[number];
 
 export type SettingType = {
-  targetDir: string;
-  username: string;
-  password: string;
-  isPassEnabled: boolean;
-  language: Language;
-  keyBindings: KeyBindings;
+  target_dir: string,
+  username: string,
+  password: string,
+  is_pass_enabled: boolean,
+  language: Language,
+  autosave: number | null,
+  key_bindings: {
+    [command: string]: string
+  },
+  is_new: boolean,
 };
 
 const initialState: SettingType = {
-  targetDir: "./notex",
+  target_dir: "~/.notex/target",
   username: "",
   password: "",
-  isPassEnabled: false,
+  is_pass_enabled: false,
   language: "english",
-  keyBindings: {},
-};
-
-type KeyBindingsAction = {
-  key: string;
-  value: any;
+  autosave: null,
+  key_bindings: {},
+  is_new: true,
 };
 
 const settingsSlice = createSlice({
@@ -41,16 +47,21 @@ const settingsSlice = createSlice({
       state.password = action.payload;
     },
     setPassEnabled(state, action: PayloadAction<boolean>) {
-      state.isPassEnabled = action.payload;
+      state.is_pass_enabled = action.payload;
     },
     setLanguage(state, action: PayloadAction<Language>) {
       state.language = action.payload;
     },
-    updateKeyBindings(state, action: PayloadAction<KeyBindingsAction>) {
-      state.keyBindings[action.payload.key] = action.payload.value;
+    updateKeyBindings(state, action: PayloadAction<{
+      key: number;
+      value: string;
+    }>) {
+      state.key_bindings[action.payload.key] = action.payload.value;
     },
-    deleteKeyBindings(state, action) {
-      state.keyBindings[action.payload.key] = undefined;
+    deleteKeyBindings(state, action: PayloadAction<{
+      key: number
+    }>) {
+      state.key_bindings[action.payload.key] = "";
     },
     setSettings(state, action) {
       return action.payload;

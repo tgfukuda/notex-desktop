@@ -1,5 +1,7 @@
+/** @jsxImportSource @emotion/react */
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { css, useTheme } from "@emotion/react";
 import PropTypes from "prop-types";
 import {
   AppBar,
@@ -9,48 +11,10 @@ import {
   useScrollTrigger,
   CssBaseline,
   Slide,
-} from "@material-ui/core";
-import SettingsIcon from "@material-ui/icons/Settings";
-import { makeStyles } from "@material-ui/core/styles";
+} from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
 import utilMsg from "../utils/constant/util";
 import { useSettings } from "../redux/hooks";
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    width: "100vw",
-    zIndex: 500,
-    height: "15vh",
-  },
-  nonRootRoot: {
-    width: "100vw",
-    zIndex: 500,
-    height: "8vh",
-  },
-  appBar: {
-    padding: theme.spacing(2),
-    height: "15vh",
-  },
-  nonRootAppBar: {
-    padding: theme.spacing(0.5),
-    height: "8vh",
-  },
-  title: {
-    flexGrow: 1,
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "block",
-    },
-    textDecorationLine: "none",
-  },
-  searchBar: {
-    width: "30%",
-  },
-  dummy: (props: { width: number }) => ({
-    width: props.width || "100%",
-    height: "3vh",
-    padding: theme.spacing(1),
-  }),
-}));
 
 type Props = {
   children: React.ReactElement;
@@ -75,28 +39,46 @@ HideOnScroll.propTypes = {
 };
 
 export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
-  const classes = useStyles({ width: width });
+  const theme = useTheme();
   return (
     <>
       <CssBaseline />
       <HideOnScroll>
-        <div className={classes.dummy} />
+        <div
+          css={css({
+            width: width || "100%",
+            height: "3vh",
+            padding: theme.spacing(1),
+          })}
+        />
       </HideOnScroll>
     </>
   );
 };
 
 const Header = () => {
-  const classes = useStyles({ width: 0 });
+  const theme = useTheme();
   const utilMsgs = utilMsg(useSettings().language);
   const path = useLocation().pathname;
   const isRoot = path === "/" || path.startsWith("/home");
 
   return (
-    <header className={isRoot ? classes.root : classes.nonRootRoot}>
+    <header
+      css={css({
+        width: "100vw",
+        zIndex: 500,
+        height: isRoot ? "15vh" : "10vh",
+      })}
+    >
       <CssBaseline />
       <HideOnScroll>
-        <AppBar className={isRoot ? classes.appBar : classes.nonRootAppBar}>
+        <AppBar
+          component={"nav"}
+          css={css({
+            padding: theme.spacing(2),
+            height: isRoot ? "15vh" : "10vh",
+          })}
+        >
           <Toolbar>
             <Typography
               variant={isRoot ? "h1" : "h6"}
@@ -104,7 +86,10 @@ const Header = () => {
               to={"/home"}
               color={"inherit"}
               noWrap
-              className={classes.title}
+              css={css({
+                flexGrow: 1,
+                textDecorationLine: "none",
+              })}
             >
               NoTeX
             </Typography>

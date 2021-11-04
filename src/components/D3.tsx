@@ -1,60 +1,7 @@
-import React, {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
-import { makeStyles, alpha } from "@material-ui/core/styles";
-import { Box } from "@material-ui/core";
+/** @jsxImportSource @emotion/react */
+import React, { useRef, useEffect } from "react";
+import { css } from "@emotion/react";
 import * as d3 from "d3";
-import { FunctionGraphData, TableInnerData } from "../redux/write";
-
-const useStyles = makeStyles((theme) => ({
-  full: {
-    width: "99.5%",
-  },
-  table: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  tableHeader: {
-    backgroundColor: alpha(theme.palette.common.black, 0.03),
-  },
-  tableDisabledHeader: {
-    display: "none",
-  },
-  tableRow: {
-    margin: 0,
-    padding: 0,
-    display: "inline-flex",
-    width: "100%",
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.common.white, 0.2),
-    },
-  },
-  input: {
-    width: "100%",
-  },
-  space0: {
-    margin: 0,
-    padding: 0,
-  },
-}));
-
-const useTableStyle = makeStyles((theme) => ({
-  tableCell: (props: { width: number; border: boolean }) => ({
-    display: "inline-flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "2rem",
-    width: props.width + "%",
-    borderStyle: "solid",
-    borderColor: theme.palette.divider,
-    borderWidth: props.border ? "0.5px" : "0px",
-    textAlign: "center",
-  }),
-}));
 
 function calc(
   op: string,
@@ -292,7 +239,7 @@ const ConstantMap = {
   pi: Math.PI,
   e: Math.E,
 } as const;
-const reduction: (
+export const reduction: (
   x: number
 ) => (parsedFunction: ParseResult) => Promise<number> =
   (x: number) => async (parsedFunction: ParseResult) => {
@@ -312,12 +259,12 @@ const reduction: (
         else return x;
       } else if (typeof parsedFunction === "number") return parsedFunction;
       else if (typeof parsedFunction === "object") {
-        const { operator: op, left: left, right: right } = parsedFunction;
-        if (op === undefined || left === undefined || right === undefined)
+        const { operator, left, right } = parsedFunction;
+        if (operator === undefined || left === undefined || right === undefined)
           return 0;
         const calculatedArg1 = await __inner(x, left);
         const calculatedArg2 = await __inner(x, right);
-        return calc(op, calculatedArg1, calculatedArg2);
+        return calc(operator, calculatedArg1, calculatedArg2);
       } else return 0;
     }
 
@@ -330,67 +277,18 @@ const reduction: (
  * d3 typing with react is a bit painfull
  * TODO -- remove `any`
  */
+export type Coordinate = {
+  x: number;
+  y: number;
+};
 type FunctionD3Props = {
-  handleErr: (msg: string) => void;
-} & FunctionGraphData;
-export const FunctionD3: React.FC<FunctionD3Props> = ({
-  func,
-  domain,
-  handleErr,
-}) => {
-  type Coordinate = {
-    x: number;
-    y: number;
-  };
-
-  const [min, max, division] =
-    Number.isNaN(domain.min) ||
-    Number.isNaN(domain.max) ||
-    Number.isNaN(domain.division) ||
-    domain.max <= domain.min ||
-    !Number.isInteger(domain.division)
-      ? [0, 1, 100]
-      : [domain.min, domain.max, domain.division];
-
-  const data0 = [...(Array(domain.division).keys() as unknown as number[])].map(
-    (_, i) => ({
-      x: min + (i / division) * (max - min),
-      y: 0,
-    })
-  );
-  const [data, setData] = useState(data0);
-
-  const parseResult = useMemo(() => {
-    try {
-      return parseFormula(func);
-    } catch (err) {
-      handleErr(err as string);
-      return 0;
-    }
-  }, [func]);
-  const updateData = useCallback(
-    () =>
-      Promise.all(
-        [...(Array(division).keys() as unknown as number[])].map(
-          async (_, i) => {
-            const x = min + (i / division) * (max - min);
-            const y = await reduction(x)(parseResult).catch((err) => {
-              console.error(err);
-              return 0;
-            });
-            return { x, y };
-          }
-        ) || []
-      ),
-    [domain, parseResult]
-  );
-
-  useEffect(() => {
-    //console.log("rendered Function D3");
-    (async () => {
-      setData(await updateData());
-    })();
-  }, [updateData]);
+  data: Coordinate[];
+};
+export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
+  const data0 = data.map((c) => ({
+    x: c.x,
+    y: 0,
+  }));
 
   const chartRef = useD3(
     (svg) => {
@@ -465,155 +363,18 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({
   );
 
   return (
-    <Box>
+    <div
+      css={css({
+        width: "100%",
+        height: 350,
+      })}
+    >
       <svg ref={chartRef}>
         <path className="plot-area" />
         <path className="plot-line-0-area" />
         <g className="x-axis" />
         <g className="y-axis" />
       </svg>
-    </Box>
-  );
-};
-
-/**
- * d3 typing with react is a bit painfull
- * TODO -- remove `any`
- */
-type TableD3Props = {
-  border?: boolean;
-  mode: "edit" | "preview";
-  handleCell: (i: number, j: number, arg: string) => void;
-} & TableInnerData;
-export const TableD3: React.FC<TableD3Props> = ({
-  row_num,
-  column_num,
-  headers,
-  cells,
-  border = true,
-  mode,
-  handleCell,
-}) => {
-  const width = 99.5 / column_num;
-  const classes = {
-    ...useStyles(),
-    ...useTableStyle({
-      width: width,
-      border: border,
-    }),
-  };
-  const [cell, setCell] = useState<[number | undefined, number | undefined]>([
-    undefined,
-    undefined,
-  ]);
-  const handleClick = (i: number, j: number) =>
-    mode === "edit"
-      ? () => {
-          if (i !== -1 || j !== -1) setCell([i, j]);
-        }
-      : () => {};
-  const handleBlur = (i: number, j: number) =>
-    mode === "edit"
-      ? (e: any) => {
-          if (i !== -1 || j !== -1) {
-            handleCell(i, j, e.target.value);
-            setCell([-1, -1]);
-          }
-        }
-      : () => {};
-
-  const tableRef = useD3(
-    (table) => {
-      try {
-        /**
-         * @param {selection} div
-         * @param {string} selector
-         * @param {(i) => string} cls
-         */
-        const renderRows = (
-          div: any,
-          selector: string,
-          cls: (i: number) => string
-        ) =>
-          div.each((d: any, i: number, node: any) => {
-            //eslint-disable-next-line
-            const [, r, c] = d;
-            const selection = d3
-              .select(node[i])
-              .attr("class", cls(i))
-              .datum(d[0]);
-            if (cell[0] === r && cell[1] === c) {
-              const target = selection.enter().merge(selection);
-              target.selectAll("." + selector).remove();
-              const input = target
-                .append("input")
-                .attr("class", selector + " " + classes.input)
-                .property("value", (d) => d)
-                .property("autofocus", "autofocus")
-                .on("blur", handleBlur(r, c));
-              if (input) input.node()?.focus();
-            } else {
-              const target = selection
-                .enter()
-                .merge(selection)
-                .on("click", handleClick(r, c));
-              target.selectAll("." + selector).remove();
-              target
-                .append("span")
-                .text((d) => d)
-                .attr("class", selector + " " + classes.full);
-            }
-          });
-
-        if (headers.length) {
-          const bindH = table
-            .select(".thead")
-            .select(".tr")
-            .data(headers.map((d, j) => [d, -1, j]));
-          bindH
-            .enter()
-            .append("div")
-            .merge(bindH)
-            .call(renderRows, "td_value", (i: number) => classes.tableCell);
-        }
-
-        const bindR = table
-          .select(".tbody")
-          .selectAll(".tr")
-          .data(cells.map((r, i) => r.map((rc, j) => [rc, i, j])));
-        bindR.exit().remove();
-
-        const bindRC = bindR
-          .enter()
-          .append("div")
-          .merge(bindR)
-          .attr("class", "tr " + classes.tableRow)
-          .selectAll("div")
-          .data((row: any) => row);
-
-        const dataCells = bindRC.enter().append("div").merge(bindRC);
-
-        dataCells.call(
-          renderRows,
-          "td_value",
-          (i: number) => classes.tableCell
-        );
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    [...cells, ...cell]
-  );
-
-  return (
-    <div
-      ref={tableRef}
-      className={"table " + classes.full + " " + classes.table}
-    >
-      <div className={"thead " + classes.space0}>
-        <div className={"tr " + classes.tableHeader} />
-      </div>
-      <div className={"tbody " + classes.space0} />
     </div>
   );
 };

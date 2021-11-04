@@ -1,20 +1,18 @@
-import React from "react";
+/** @jsxImportSource @emotion/react */
+import React, { useEffect } from "react";
 import "./App.css";
-import { createTheme, MuiThemeProvider } from "@material-ui/core/styles";
-import { CssBaseline } from "@material-ui/core";
+import { ThemeProvider as EmotionProvider } from "@emotion/react";
 import { SnackContextProvider } from "./context/SnackHandler";
 import { ModalContextProvider } from "./context/Modal";
 import store from "./redux/store";
 import { Provider as ReduxProvider } from "react-redux";
+import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
 import Top from "./pages/Top";
 
-const customTheme = createTheme({
+const theme = createTheme({
   palette: {
     primary: {
-      // light: will be calculated from palette.primary.main,
       main: "#6EB7DB",
-      // dark: will be calculated from palette.primary.main,
-      // contrastText: will be calculated to contrast with palette.primary.main
     },
     secondary: {
       main: "#A4A9CF",
@@ -34,21 +32,32 @@ const customTheme = createTheme({
     warning: {
       main: "#FDF7AA",
     },
-    // Used by `getContrastText()` to maximize the contrast between
-    // the background and the text.
-    contrastThreshold: 3,
-    // Used by the functions below to shift a color's luminance by approximately
-    // two indexes within its tonal palette.
-    // E.g., shift from Red 500 to Red 300 or Red 700.
-    tonalOffset: 0.2,
+    divider: "rgba(0, 0, 0, 0.12)",
+    common: {
+      black: "rgba(0, 0, 0, 0.1)",
+      white: "white",
+    },
+  },
+  typography: {
+    fontSize: 14,
   },
 });
+
+const ThemeProvider: React.FC<{ theme: typeof theme }> = ({
+  theme,
+  children,
+}) => {
+  return (
+    <MuiThemeProvider theme={theme}>
+      <EmotionProvider theme={theme}>{children}</EmotionProvider>
+    </MuiThemeProvider>
+  );
+};
 
 function App() {
   return (
     <React.StrictMode>
-      <MuiThemeProvider theme={customTheme}>
-        <CssBaseline />
+      <ThemeProvider theme={theme}>
         <ModalContextProvider>
           <SnackContextProvider>
             <ReduxProvider store={store}>
@@ -56,7 +65,7 @@ function App() {
             </ReduxProvider>
           </SnackContextProvider>
         </ModalContextProvider>
-      </MuiThemeProvider>
+      </ThemeProvider>
     </React.StrictMode>
   );
 }

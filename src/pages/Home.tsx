@@ -1,49 +1,81 @@
-import React from "react";
+/** @jsxImportSource @emotion/react */
+import React, { useState } from "react";
 import { Link, Route, useRouteMatch } from "react-router-dom";
-import { Button, Grid, Typography } from "@material-ui/core";
-import { ArrowRightRounded } from "@material-ui/icons";
-import { makeStyles, alpha } from "@material-ui/core/styles";
-import CollapsedController from "../components/CollapsedController";
+import {
+  Interpolation,
+  Theme,
+  css,
+  useTheme,
+  SerializedStyles,
+} from "@emotion/react";
+import { Button, Grid, Typography, Collapse } from "@mui/material";
+import { ArrowRightRounded, ArrowDropDownRounded } from "@mui/icons-material";
 
-const useStyles = makeStyles((theme) => ({
-  controller: {
-    width: "15vw",
-    margin: theme.spacing(0.5),
-    padding: theme.spacing(0),
-    backgroundColor: alpha(theme.palette.common.black, 0.05),
-    borderRadius: theme.shape.borderRadius,
-  },
-  collapsed: {
-    margin: theme.spacing(0, 1, 0, 1.5),
-  },
-  main: {
-    width: "80vw",
-    margin: theme.spacing(0.5),
-    padding: theme.spacing(0.5),
-  },
-  full: {
+const full = css({
+  "& .MuiButton-root": {
     width: "99.5%",
     textAlign: "start",
     verticalAlign: "middle",
     display: "block",
   },
-  sticky: {
-    position: "sticky",
-    top: 20,
-    maxHeight: "80vh",
-    marginRight: theme.spacing(1.5),
-  },
-  warning: {
+});
+
+const red = css({
+  color: "red",
+});
+
+type Props = {
+  surface?: JSX.Element;
+  timeout?:
+    | number
+    | {
+        appear?: number;
+        enter?: number;
+        exit?: number;
+      };
+  orientation?: "vertical" | "horizontal";
+  openIcon?: JSX.Element;
+  closeIcon?: JSX.Element;
+  buttonCss?: SerializedStyles;
+  bodyCss?: SerializedStyles;
+};
+
+const CollapsedController: React.FC<Props> = ({
+  surface,
+  children,
+  orientation = "vertical",
+  openIcon = <ArrowRightRounded />,
+  closeIcon = <ArrowDropDownRounded />,
+  buttonCss,
+  bodyCss,
+}) => {
+  const [display, setDisplay] = useState(false);
+  const handleDisplay = () => setDisplay(!display);
+
+  return (
+    <>
+      <Button onClick={handleDisplay} css={buttonCss ?? {}}>
+        {display ? closeIcon : openIcon}
+        {surface}
+      </Button>
+      <Collapse
+        orientation={orientation}
+        in={display}
+        timeout={"auto"}
+        css={bodyCss}
+      >
+        {children}
+      </Collapse>
+    </>
+  );
+};
+
+const WelcomeToNoTeX: React.FC = () => {
+  const theme = useTheme();
+  const warning = css({
     color: "red",
     fontSize: theme.typography.fontSize / 2,
-  },
-  red: {
-    color: "red",
-  },
-}));
-
-const WelcomeToNoTeX = () => {
-  const classes = useStyles();
+  });
 
   return (
     <div>
@@ -78,10 +110,10 @@ const WelcomeToNoTeX = () => {
           </li>
         </ul>
       </Typography>
-      <Typography variant={"subtitle2"} className={classes.warning}>
+      <Typography variant={"subtitle2"} css={warning}>
         Note!:
       </Typography>
-      <Typography variant={"body2"} className={classes.warning}>
+      <Typography variant={"body2"} css={warning}>
         This App still being developped. above instructions can change in the
         future and there are still some function not supported.
       </Typography>
@@ -89,9 +121,7 @@ const WelcomeToNoTeX = () => {
   );
 };
 
-const UsageOfWrite = () => {
-  const classes = useStyles();
-
+const UsageOfWrite: React.FC = () => {
   return (
     <div>
       <Typography variant={"h2"}>Usage: Write</Typography>
@@ -103,11 +133,11 @@ const UsageOfWrite = () => {
       <Typography variant={"body1"} gutterBottom>
         If you write down a new file, there will be a section which display
         "title".
-        <span className={classes.red}>Section</span> is a important concept. It
-        means normally "section", and can have sections, paragraphs, lists,
-        tables, graphs as children. Click the "Controller" being put on the left
-        side. you will see such orders. Additionally, you can see the "delete"
-        button. That executes a literally operation.
+        <span css={red}>Section</span> is a important concept. It means normally
+        "section", and can have sections, paragraphs, lists, tables, graphs as
+        children. Click the "Controller" being put on the left side. you will
+        see such orders. Additionally, you can see the "delete" button. That
+        executes a literally operation.
       </Typography>
       <Typography variant={"h3"}>Pragraph</Typography>
       <Typography variant={"body1"} gutterBottom>
@@ -161,7 +191,7 @@ const UsageOfWrite = () => {
   );
 };
 
-const UsageOfBrowse = () => {
+const UsageOfBrowse: React.FC = () => {
   return (
     <div>
       <Typography variant={"h2"}>Usage: Browse</Typography>
@@ -175,7 +205,7 @@ const UsageOfBrowse = () => {
   );
 };
 
-const UsageOfView = () => {
+const UsageOfView: React.FC = () => {
   return (
     <div>
       <Typography variant={"h2"}>Usage: View</Typography>
@@ -187,41 +217,45 @@ const UsageOfView = () => {
   );
 };
 
-const Home = () => {
-  const classes = useStyles();
+const Home: React.FC = () => {
+  const theme = useTheme();
   let { url } = useRouteMatch();
 
   return (
     <Grid container direction={"row"}>
-      <Grid item className={classes.controller}>
+      <Grid
+        item
+        css={css({
+          width: "15vw",
+          margin: theme.spacing(0.5),
+          padding: theme.spacing(0),
+          backgroundColor: "rgba(48, 48, 48, 0.05)",
+          borderRadius: theme.shape.borderRadius,
+        })}
+      >
         <Button component={Link} to={`${url}`}>
           <ArrowRightRounded /> Welcome
         </Button>
         <CollapsedController surface={<>Usage</>}>
-          <Button
-            component={Link}
-            to={`${url}/write`}
-            classes={{ root: classes.full }}
-          >
+          <Button component={Link} to={`${url}/write`} css={full}>
             <ArrowRightRounded /> Write Down
           </Button>
-          <Button
-            component={Link}
-            to={`${url}/browse`}
-            classes={{ root: classes.full }}
-          >
+          <Button component={Link} to={`${url}/browse`} css={full}>
             <ArrowRightRounded /> Browse
           </Button>
-          <Button
-            component={Link}
-            to={`${url}/view`}
-            classes={{ root: classes.full }}
-          >
+          <Button component={Link} to={`${url}/view`} css={full}>
             <ArrowRightRounded /> View
           </Button>
         </CollapsedController>
       </Grid>
-      <Grid item className={classes.main}>
+      <Grid
+        item
+        css={css({
+          width: "80vw",
+          margin: theme.spacing(0.5),
+          padding: theme.spacing(0.5),
+        })}
+      >
         <Route exact path={`${url}`}>
           <WelcomeToNoTeX />
         </Route>

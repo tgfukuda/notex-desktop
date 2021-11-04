@@ -7,9 +7,20 @@ export const dndType = {
 };
 
 //Server
-export const serverUrl = "http://localhost:5050";
+export const SERVER_URL = "http://localhost:5050";
 
-export const version = "v0.0.1";
+export const VERSION = "v0.0.1";
+
+export const Z_INDEXES = {
+  overlay: {
+    ground: 90000,
+    main: 99999,
+    sub: 99990,
+    sub2: 99900,
+    sub3: 99000,
+  },
+  snack: 100000,
+}
 
 type UtilMsg = {
   save: string;

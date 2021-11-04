@@ -15,10 +15,6 @@ export const useSettings = () => {
   return useAppSelector((state) => state.settings);
 };
 
-export const useNotexData = (id: string) => {
-  return useAppSelector((state) => state.write.meta.data[id]);
-};
-
 export const useWrite = () => {
   return useAppSelector((state) => state.write);
 };
