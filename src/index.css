@@ -6,6 +6,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background-color: #F5F5F5,
+}
+body::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867));
+}
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
@@ -37,8 +48,8 @@ code {
 
 .modal {
   position: fixed;
-  left: 10vw; top: 20vh;
-  width: 80vw; top: 60vh;
+  left: "10%"; top: "20%";
+  width: "80%"; height: "60%";
   background-color: papayawhip;
   z-index: 2147483646;
 }

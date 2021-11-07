@@ -1,273 +1,370 @@
-import React, { useEffect, useRef, useState } from "react";
-import { InputBase, Grid, Button } from "@material-ui/core";
-import { makeStyles, alpha } from "@material-ui/core/styles";
-import useCommand from "../api/command";
-import { useWrite, useAppDispatch, useSettings } from "../redux/hooks";
-import { Write } from "../redux/write";
-import Section from "../components/Section";
-import Paragraph from "../components/Paragraph";
-import List from "../components/List";
+/** @jsxImportSource @emotion/react */
+import React, {
+  ChangeEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useLocation } from "react-router";
+import { css, useTheme } from "@emotion/react";
+import { alpha } from "@mui/material/styles";
+import {
+  InputBase,
+  Grid,
+  Button,
+  Paper,
+  Chip,
+  TextField,
+  Collapse,
+} from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ImageIcon from "@mui/icons-material/Image";
+import useCommand, { Response } from "../api/command";
+import { useSettings } from "../redux/hooks";
+import { Meta } from "../redux/write";
 import { useSnackHandler } from "../context/SnackHandler";
+import useKeyAction, { useNativeKeyAction } from "../hooks/Keyboard";
 import writeMsg from "../utils/constant/write/write";
-import Graph from "../components/Graph";
-import Image from "../components/Image";
-import Table from "../components/Table";
-import { v4 as uuidv4 } from "uuid";
+import Markdown from "../components/Markdown";
+import { Z_INDEXES } from "../utils/constant/util";
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    width: "100vw",
-    height: "100%",
-    margin: theme.spacing(0.5),
+const scrollable = css({
+  height: "80vh",
+  overflow: "scroll",
+  "&::-webkit-scrollbar": {
+    width: "6px",
+    height: "6px",
+    backgroundColor: "#F5F5F5",
   },
-  scrollable: {
-    height: "90vh",
-    overflow: "scroll",
-    "&::-webkit-scrollbar": {
-      width: "6px",
-      height: "6px",
-      backgroundColor: "#F5F5F5",
-    },
-    "&::-webkit-scrollbar-thumb": {
-      borderRadius: "5px",
-      "-webkit-box-shadow": "inset 0 0 6px rgba(0, 0, 0, 0.1)",
-      backgroundImage:
-        "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
-    },
+  "&::-webkit-scrollbar-thumb": {
+    borderRadius: "5px",
+    "-webkit-box-shadow": "inset 0 0 6px rgba(0, 0, 0, 0.1)",
+    backgroundImage:
+      "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
   },
-  rawInput: {
-    width: "40%",
-    margin: theme.spacing(0.5),
-    padding: theme.spacing(1),
-    backgroundColor: theme.palette.common.white,
-    borderStyle: "solid",
-    borderWidth: "1px",
-    borderRadius: theme.shape.borderRadius,
-    cursor: "text",
-  },
-  innerInput: {
-    width: "100%",
-    minHeight: "100%",
-  },
-  preview: {
-    width: "55%",
-    margin: theme.spacing(0.5),
-    padding: theme.spacing(1),
-    border: "2mm ridge rgba(255, 255, 255, .6)",
-  },
-  save: {
-    backgroundColor: theme.palette.success.main,
-    minWidth: "90%",
-    margin: theme.spacing(0, 0.3, 0, 1.5),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.success.main, 0.5),
-    },
-  },
-}));
+});
 
-function isSection(str: string): number {
-  let depth = -1;
-  for (const chr of str) {
-    if (chr === "#") {
-      depth++;
-    } else if (0 <= depth && chr === " ") {
-      return depth;
-    } else break;
-  }
+const useInputControll = (handleImageUrl: (url: string) => void) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const reader = new FileReader();
+  reader.onload = (e: ProgressEvent<FileReader>) => {
+    if (e.target && typeof e.target.result === "string")
+      handleImageUrl(e.target.result);
+  };
+  const handleChange = (_: ChangeEvent) => {
+    if (inputRef.current && inputRef.current.files)
+      reader.readAsDataURL(inputRef.current.files[0]);
+  };
 
-  return -1;
-}
+  return {
+    inputRef,
+    handleChange,
+  };
+};
 
-function isData(str: string, _type: string, id: string) {
-  if (str === _type + "()") {
-    return uuidv4();
-  } else if (
-    str.startsWith(_type) &&
-    str.length === _type.length + id.length + 2
-  ) {
-    return id;
-  } else return "";
-}
+type PostButtonProps = {
+  handleSave: () => void;
+};
+const PostButton: React.FC<PostButtonProps> = ({ handleSave }) => {
+  const theme = useTheme();
 
-function isListItem(str: string): boolean {
-  return str.startsWith("- ");
+  return (
+    <Button
+      onClick={handleSave}
+      css={css({
+        backgroundColor: theme.palette.success.main,
+        "&:hover": {
+          backgroundColor: alpha(theme.palette.success.main, 0.5),
+        },
+      })}
+    >
+      {writeMsg(useSettings().language).save}
+    </Button>
+  );
+};
+
+type ControlerProps = {
+  meta: Meta;
+  setMeta: React.Dispatch<React.SetStateAction<Meta>>;
+  handleImageUrl: (url: string) => void;
+  handleSave: () => void;
+};
+const Controler: React.FC<ControlerProps> = ({
+  meta,
+  setMeta,
+  handleImageUrl,
+  handleSave,
+}) => {
+  const theme = useTheme();
+  const field = css({
+    width: "30vw",
+    minHeight: "5vh",
+  });
+  const [open, setOpen] = useState(false);
+  const [tagIdx, setTagIdx] = useState<number>(-1);
+  const [tag, setTag] = useState("");
+  const handleTag = () => {
+    if (tagIdx === -1 && tag !== "") {
+      setMeta({
+        ...meta,
+        tags: [...meta.tags, tag],
+      });
+      setTagIdx(-1);
+      setTag("");
+    } else if (tag !== "") {
+      setMeta({
+        ...meta,
+        tags: [
+          ...meta.tags.slice(0, tagIdx),
+          tag,
+          ...meta.tags.slice(tagIdx + 1),
+        ],
+      });
+      setTagIdx(-1);
+      setTag("");
+    }
+  };
+
+  const { handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
+    if (keyboard["Enter"]) {
+      e.preventDefault();
+      keyboard = {};
+      handleTag();
+    }
+  });
+
+  const handleStop = (e: React.MouseEvent) => e.stopPropagation();
+  const { inputRef, handleChange } = useInputControll(handleImageUrl);
+
+  return (
+    <>
+      <div
+        css={css({
+          width: "100%",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "flex-start",
+          alignItems: "center",
+        })}
+      >
+        <Button
+          onClick={() => setOpen(!open)}
+          css={css`
+            max-width: 5%;
+            background-color: rgba(71, 120, 211, 0.568);
+          `}
+        >
+          <MoreVertIcon />
+        </Button>
+        <Button
+          onClick={() => inputRef.current?.click()}
+          css={css`
+            max-width: 5%;
+            background-color: rgba(71, 120, 211, 0.568);
+          `}
+        >
+          <ImageIcon />
+        </Button>
+        <PostButton handleSave={handleSave} />
+        <input
+          type={"file"}
+          accept={".png,.jpg,.jpeg,.gif,.pdf"}
+          ref={inputRef}
+          onChange={handleChange}
+          css={css({
+            display: "none",
+          })}
+        />
+      </div>
+      <div
+        css={css`
+          postion: sticky;
+          display: ${open ? "block" : "none"};
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: 100vw;
+          background-color: rgba(100, 100, 100, 0.8);
+          z-index: ${Z_INDEXES.overlay.ground};
+        `}
+        onClick={() => setOpen(false)}
+      >
+        <Collapse
+          in={open}
+          orientation={"horizontal"}
+          css={css`
+            position: relative;
+            top: 10%;
+            left: 0;
+            height: 100vh;
+            z-index: ${Z_INDEXES.overlay.main};
+          `}
+        >
+          <ul>
+            <li>
+              <TextField
+                label={"filename"}
+                defaultValue={meta.filename}
+                onClick={handleStop}
+                onBlur={(e) =>
+                  setMeta({
+                    ...meta,
+                    filename: e.target.value,
+                  })
+                }
+                css={field}
+              />
+            </li>
+            <li>
+              <TextField
+                label={"author"}
+                defaultValue={meta.author}
+                onClick={handleStop}
+                onBlur={(e) =>
+                  setMeta({
+                    ...meta,
+                    author: e.target.value,
+                  })
+                }
+                css={field}
+              />
+            </li>
+            <li>
+              <Paper
+                component={"ul"}
+                variant={"outlined"}
+                onClick={handleStop}
+                css={[
+                  css({
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    alignItems: "flex-start",
+                    flexWrap: "wrap",
+                    listStyle: "none",
+                    padding: theme.spacing(0.5),
+                    margin: 0,
+                    overflowY: "scroll",
+                    "&::-webkit-scrollbar": {
+                      width: "6px",
+                      height: "6px",
+                    },
+                  }),
+                  field,
+                ]}
+              >
+                {meta.tags.map((tagName, i) => {
+                  return (
+                    <li key={"metadata_tag_" + i}>
+                      {tagIdx === i ? (
+                        <TextField
+                          label={"tag"}
+                          value={tag}
+                          autoFocus
+                          onKeyDown={handleKeyDown}
+                          onKeyUp={handleKeyUp}
+                          onChange={(e) => setTag(e.target.value)}
+                          key={"file_metadata_tag_" + i}
+                        />
+                      ) : (
+                        <Chip
+                          label={
+                            20 < tagName.length
+                              ? tagName.slice(0, 20) + "..."
+                              : tagName
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTagIdx(i);
+                            setTag(tagName);
+                          }}
+                          onDelete={() =>
+                            setMeta({
+                              ...meta,
+                              tags: [
+                                ...meta.tags.slice(0, i),
+                                ...meta.tags.slice(i + 1),
+                              ],
+                            })
+                          }
+                          key={"file_metadata_tag_" + i}
+                          css={css({
+                            margin: theme.spacing(0.5),
+                            backgroundColor: "#E3E3E3",
+                          })}
+                        />
+                      )}
+                    </li>
+                  );
+                })}
+                {tagIdx === -1 && (
+                  <li>
+                    <TextField
+                      label={"tag"}
+                      value={tag}
+                      onClick={handleStop}
+                      onKeyDown={handleKeyDown}
+                      onKeyUp={handleKeyUp}
+                      onChange={(e) => setTag(e.target.value)}
+                    />
+                  </li>
+                )}
+              </Paper>
+            </li>
+          </ul>
+        </Collapse>
+      </div>
+    </>
+  );
+};
+
+enum ShouldUpdate {
+  USERIN = 0,
+  WAIT,
+  DONE,
 }
 
 type RawInputProps = {
-  data: string;
-  setData: React.Dispatch<React.SetStateAction<string>>;
+  raw: string;
+  handleRaw: (arg: string) => void;
 };
-const RawInput: React.FC<RawInputProps> = ({ data, setData }) => {
-  const classes = useStyles();
-  const dispatch = useAppDispatch();
-  const [load, setLoad] = useState(false);
-  const ref = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
+const RawInput: React.FC<RawInputProps> = ({ raw, handleRaw }) => {
+  const theme = useTheme();
+  const { ref, handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      keyboard = {};
+      handleRaw(raw + "  ");
+    }
+  });
   const handleClick = () => ref.current?.focus();
-
-  useEffect(() => {
-    dispatch(Write.clear());
-    setLoad(false);
-    let lines = data.split("\n");
-    let depth = 0;
-    var flag: string | number;
-    let acc = "";
-    let items = [];
-    let gen = [];
-
-    for (const line of lines) {
-      if (isListItem(line)) {
-        if (acc) {
-          dispatch(
-            Write.addParagraph({
-              contents: acc,
-              indent: depth,
-            })
-          );
-          acc = "";
-        }
-        gen.push(line);
-        items.push(line.slice("- ".length));
-        continue;
-      } else if (items.length) {
-        dispatch(Write.addList({ items }));
-        items = [];
-      }
-
-      flag = isSection(line);
-      if (flag !== -1) {
-        gen.push(line);
-        if (acc) {
-          dispatch(
-            Write.addParagraph({
-              contents: acc,
-              indent: depth,
-            })
-          );
-          acc = "";
-        }
-        depth = flag;
-        dispatch(
-          Write.addSection({
-            header: line.slice(depth + 1),
-            depth: depth,
-          })
-        );
-        continue;
-      }
-
-      flag = isData(
-        line,
-        "\\table",
-        line.slice("\\table".length + 1, "\\table".length + 36 + 1)
-      );
-      if (flag) {
-        if (acc) {
-          dispatch(
-            Write.addParagraph({
-              contents: acc,
-              indent: depth,
-            })
-          );
-          acc = "";
-        }
-        gen.push("\\table(" + flag + ")");
-        dispatch(
-          Write.addData({
-            uuid: flag,
-            type: "table",
-            name: "",
-          })
-        );
-        continue;
-      }
-
-      flag = isData(
-        line,
-        "\\image",
-        line.slice("\\image".length + 1, "\\image".length + 36 + 1)
-      );
-      if (flag) {
-        if (acc) {
-          dispatch(
-            Write.addParagraph({
-              contents: acc,
-              indent: depth,
-            })
-          );
-          acc = "";
-        }
-        gen.push("\\image(" + flag + ")");
-        dispatch(
-          Write.addData({
-            uuid: flag,
-            type: "image",
-            name: "",
-          })
-        );
-        continue;
-      }
-
-      flag = isData(
-        line,
-        "\\graph",
-        line.slice("\\graph".length + 1, "\\graph".length + 36 + 1)
-      );
-      if (flag) {
-        if (acc) {
-          dispatch(
-            Write.addParagraph({
-              contents: acc,
-              indent: depth,
-            })
-          );
-          acc = "";
-        }
-        gen.push("\\graph(" + flag + ")");
-        dispatch(
-          Write.addData({
-            uuid: flag,
-            type: "graph",
-            name: "",
-          })
-        );
-        continue;
-      }
-
-      gen.push(line);
-      acc += line + "\n";
-    }
-
-    if (items.length) {
-      dispatch(Write.addList({ items }));
-    }
-
-    if (acc) {
-      dispatch(
-        Write.addParagraph({
-          contents: acc,
-          indent: depth,
-        })
-      );
-    }
-
-    setData(gen.join("\n"));
-  }, [load]);
 
   return (
     <Grid
       item
-      className={classes.rawInput + " " + classes.scrollable}
+      css={css([
+        scrollable,
+        css({
+          width: "40%",
+          margin: theme.spacing(0.5),
+          padding: theme.spacing(1),
+          borderStyle: "solid",
+          borderWidth: "1px",
+          borderRadius: theme.shape.borderRadius,
+          cursor: "text",
+        }),
+      ])}
       onClick={handleClick}
     >
       <InputBase
-        value={data}
+        value={raw}
         multiline
         fullWidth
         minRows={5}
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
         onChange={(e) => {
-          setData(e.target.value);
-          setLoad(true);
+          handleRaw(e.target.value);
         }}
         inputRef={ref}
       />
@@ -275,128 +372,129 @@ const RawInput: React.FC<RawInputProps> = ({ data, setData }) => {
   );
 };
 
-const Preview: React.FC = () => {
-  const classes = useStyles();
-  const state = useWrite();
-  const keys = state.docs;
+const Preview: React.FC<{
+  data: Data;
+  setLoad: React.Dispatch<React.SetStateAction<ShouldUpdate>>;
+}> = ({ data, setLoad }) => {
+  const theme = useTheme();
+  const timer = useRef<NodeJS.Timeout | null>(null);
+  const container = useRef<HTMLDivElement>(null);
 
-  return (
-    <Grid item className={classes.preview + " " + classes.scrollable}>
-      {keys.map((value, id) => {
-        if (!value) return <React.Fragment key={"unreachable" + id} />;
-        switch (value.type) {
-          case "section":
-            return (
-              <Section
-                id={id}
-                type={value.type}
-                header={value.header}
-                depth={value.depth}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-          case "paragraph":
-            return (
-              <Paragraph
-                id={id}
-                type={value.type}
-                contents={value.contents}
-                indent={value.indent}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-          case "list":
-            return (
-              <List
-                id={id}
-                type={value.type}
-                items={value.items}
-                header={value.header}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-          case "graph":
-            return (
-              <Graph
-                id={id}
-                type={value.type}
-                name={value.name}
-                uuid={value.uuid}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-          case "image":
-            return (
-              <Image
-                id={id}
-                type={value.type}
-                name={value.name}
-                uuid={value.uuid}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-          case "table":
-            return (
-              <Table
-                id={id}
-                type={value.type}
-                name={value.name}
-                uuid={value.uuid}
-                edit={false}
-                key={value.type + "_" + id}
-              />
-            );
-        }
-      })}
-    </Grid>
-  );
-};
-
-type PostButtonProps = {
-  data: string;
-  inputRef: React.RefObject<HTMLInputElement>;
-};
-const PostButton: React.FC<PostButtonProps> = ({ data, inputRef }) => {
-  const classes = useStyles();
-  const state = useWrite();
-  const { handleSuc, handleErr } = useSnackHandler();
-  const { saveDocument } = useCommand();
-
-  const handlePost = async () => {
-    if (state?.meta?.filename)
-      await saveDocument(
-        state,
-        data,
-        (res) => handleSuc(res.message),
-        (err) => handleErr(err.message)
-      );
-    else {
-      handleErr("File Name must contain at least one character");
-      inputRef.current?.focus();
+  useEffect(() => {
+    if (data.load === ShouldUpdate.USERIN) {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        timer.current = null;
+        setLoad(ShouldUpdate.DONE);
+      }, 1500);
     }
-  };
+    setLoad(ShouldUpdate.WAIT);
+  }, [data.load]);
 
   return (
     <Grid
       item
-      component={Button}
-      onClick={handlePost}
-      className={"success " + classes.save}
+      css={css([
+        scrollable,
+        css({
+          width: "55%",
+          margin: theme.spacing(0.5),
+          padding: theme.spacing(1),
+          border: "2mm ridge rgba(255, 255, 255, .6)",
+        }),
+      ])}
+      ref={container}
     >
-      {writeMsg(useSettings().language).save}
+      {useMemo(
+        () => (
+          <Markdown container={container} md={data.raw} />
+        ),
+        [data.load !== ShouldUpdate.DONE]
+      )}
     </Grid>
   );
 };
 
+type Data = {
+  raw: string;
+  load: ShouldUpdate;
+};
 const Edit: React.FC = () => {
-  const classes = useStyles();
-  const [data, setData] = useState("");
-  const ref = useRef(null);
+  const theme = useTheme();
+  const location = useLocation();
+  const [raw, setRaw] = useState("");
+  const [load, setLoad] = useState<ShouldUpdate>(ShouldUpdate.DONE);
+  const overwrite = useRef(false);
+  const handleRaw = (arg: string) => {
+    setRaw(arg);
+    setLoad(ShouldUpdate.USERIN);
+  };
+  const handleImageUrl = (url: string) => {
+    setRaw(raw + `\n![may be invalid file type](${url})`);
+    setLoad(ShouldUpdate.USERIN);
+  };
+  const [meta, setMeta] = useState<Meta>({
+    filename: "",
+    created_at: "",
+    updated_at: "",
+    author: "",
+    tags: [],
+    shortcut: {},
+  });
+  const { handleSuc, handleErr } = useSnackHandler();
+  const { saveDocument, getDocument } = useCommand();
+  const handleSave = async () => {
+    if (meta?.filename) {
+      const res = await saveDocument(meta, raw, overwrite.current).catch(
+        (err) => {
+          handleErr((err as Response).message);
+        }
+      );
+      if (res) {
+        handleSuc(res.message);
+        overwrite.current = true;
+      }
+    } else {
+      handleErr("File Name must contain at least one character");
+    }
+  };
+  const { handleKeyDown, handleKeyUp } = useNativeKeyAction(
+    async (keyboard, evt) => {
+      if (keyboard["Control"] && keyboard["s"]) {
+        evt.preventDefault();
+        await handleSave();
+      }
+    }
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    const autosave = setInterval(async () => {
+      await handleSave();
+    }, 1000 * 60 * 30);
+
+    if (location.search) {
+      (async () => {
+        const body = await getDocument(location.state as Meta).catch((err) =>
+          handleErr((err as Response).message)
+        );
+
+        if (body) {
+          setRaw(body);
+          setMeta(location.state as Meta);
+          overwrite.current = true;
+        }
+      })();
+    }
+
+    return () => {
+      clearInterval(autosave);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   return (
     <Grid
@@ -404,11 +502,21 @@ const Edit: React.FC = () => {
       direction={"row"}
       justifyContent={"space-evenly"}
       alignItems={"stretch"}
-      className={classes.root}
+      css={css({
+        width: "100vw",
+        height: "100%",
+        margin: theme.spacing(0.5),
+      })}
     >
-      <RawInput data={data} setData={setData} />
-      <Preview />
-      <PostButton data={data} inputRef={ref} />
+      <Controler
+        meta={meta}
+        setMeta={setMeta}
+        handleImageUrl={handleImageUrl}
+        handleSave={handleSave}
+      />
+      <RawInput raw={raw} handleRaw={handleRaw} />
+      <Preview data={{ raw, load }} setLoad={setLoad} />
+      <PostButton handleSave={handleSave} />
     </Grid>
   );
 };

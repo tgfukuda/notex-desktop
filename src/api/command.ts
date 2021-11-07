@@ -1,70 +1,109 @@
 import { invoke } from "@tauri-apps/api";
-import { useAppDispatch } from "../redux/hooks";
-import { NoTeXSettings, SettingType } from "../redux/settings";
-import { Document } from "../redux/write";
+import { SettingType } from "../redux/settings";
+import { Meta } from "../redux/write";
 
 export type Response = {
+  code: number;
   message: string;
 };
 
-export type Error = {
+type Error = {
+  code: number;
   message: string;
+};
+
+export type RequestDocs = {
+  offset: number;
+  limit?: number;
+  filename_start?: string;
+  filename_contain?: string;
+  created_at?: [string, string];
+  updated_at?: [string, string];
+  tags?: string[];
+  author?: string;
+};
+export type ResponseDocs = {
+  list: Meta[];
+  page: number;
+  all_tags: string[];
 };
 
 const useCommand = () => {
-  const dispatch = useAppDispatch();
-
-  const getSetting = async (callBack?: (arg: SettingType) => void) => {
-    await invoke("get_setting")
-      ?.then((setting) => {
-        console.log(setting);
-        if (callBack) callBack(setting as SettingType);
-        else dispatch(NoTeXSettings.setSettings(setting as SettingType));
-      })
-      ?.catch((err) => {});
-  };
-
-  const saveDocument = async (
-    document: Document,
-    raw: string,
-    callBack?: (arg: Response) => void,
-    handleErr?: (arg: Error) => void
-  ) => {
-    await invoke("save_document", {
-      document: {
-        meta: document.meta,
-        body: raw,
-      },
-    })
-      ?.then((res) => {
-        console.log(res);
-        if (callBack) callBack(res as Response);
-      })
-      ?.catch((err) => {
-        console.log(err);
-        if (handleErr) handleErr(err as Error);
-      });
-  };
-
-  const getDocument = async (
-    callBack?: (arg: Document) => void,
-    handleErr?: (arg: Error) => void
-  ) => {
-    await invoke("get_document")
-      ?.then((res) => {
-        console.log(res);
-        if (callBack) callBack(res as Document);
-      })
-      ?.catch((err) => {
-        console.log(err);
-        if (handleErr) handleErr(err as Error);
-      });
-  };
-
   return {
-    getSetting: getSetting,
-    saveDocument: saveDocument,
-    getDocument: getDocument,
+    getSetting: async () => {
+      try {
+        return (await invoke("get_setting")) as SettingType;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
+    updateSetting: async (setting: SettingType) => {
+      try {
+        return (await invoke("update_setting", {
+          setting,
+        })) as Response;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
+    saveDocument: async (meta: Meta, body: string, overwrite: boolean) => {
+      try {
+        return (await invoke("save_document", {
+          document: {
+            overwrite,
+            meta,
+            body,
+          },
+        })) as Response;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
+    deleteFile: async (target: Meta) => {
+      try {
+        return (await invoke("delete_file", {
+          target: target,
+        })) as Response;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
+    getDocumentsByFilter: async ({
+      offset,
+      limit = 15,
+      filename_start = "",
+      filename_contain = "",
+      created_at = ["", ""],
+      updated_at = ["", ""],
+      tags = [],
+      author = "",
+    }: RequestDocs) => {
+      try {
+        return (await invoke("get_documents_by_filter", {
+          req: {
+            offset,
+            limit,
+            filename_start,
+            filename_contain,
+            created_at,
+            updated_at,
+            tags,
+            author,
+          },
+        })) as ResponseDocs;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
+    getDocument: async (meta: Meta) => {
+      try {
+        return (await invoke("get_document", {
+          meta,
+        })) as string;
+      } catch (err) {
+        throw err as Error;
+      }
+    },
   };
 };
 

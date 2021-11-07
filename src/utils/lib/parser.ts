@@ -1,5 +1,4 @@
 import { trampoline, Internal } from "./trampoline";
-import { JSXAttributeType } from "../../redux/write";
 
 type MathParseResult = {
   type: "katex";
@@ -24,7 +23,7 @@ type ImageTypeResult = {
 };
 type AttrTypeResult = {
   type: "attr";
-  value: JSXAttributeType;
+  value: {[key: string]: string};
 };
 type ParseResult =
   | MathParseResult
@@ -120,7 +119,6 @@ function tableParser(str: string, pos: number): ParseNext {
     cells: string[][],
     option: string[]
   ): Internal<ParseNext> {
-    console.log(cells);
     if (tar.length <= next)
       return {
         isSuccess: false,
@@ -324,7 +322,6 @@ function attrParser(str: string, pos: number): ParseNext {
             newPosition: tar[next + 1] === "\n" ? next + 2 : next + 1,
           };
         } catch (e) {
-          console.error(e);
           return { isSuccess: false };
         }
       }

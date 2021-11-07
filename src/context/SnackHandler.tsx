@@ -1,8 +1,10 @@
+/** @jsxImportSource @emotion/react */
 import React, { createContext, useContext, useMemo } from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import { Button, Snackbar, Slide } from "@material-ui/core";
-import { CloseRounded } from "@material-ui/icons";
+import { css, useTheme } from "@emotion/react";
+import { Button, Snackbar, Slide } from "@mui/material";
+import { CloseRounded } from "@mui/icons-material";
 import { useSnack } from "../hooks/Snack";
+import {Z_INDEXES} from "../utils/constant/util";
 
 const SnackContext = createContext({
   handleSuc: (msg: string) => alert(msg),
@@ -54,23 +56,8 @@ interface SnackComponent {
   onClose?: () => void;
 }
 
-const useStyles = makeStyles((theme) => ({
-  successSnack: {
-    backgroundColor: theme.palette.success.main,
-    zIndex: 2147483647,
-  },
-  errorSnack: {
-    backgroundColor: theme.palette.error.main,
-    zIndex: 2147483647,
-  },
-  warningSnack: {
-    backgroundColor: theme.palette.warning.main,
-    zIndex: 2147483647,
-  },
-}));
-
 const SuccessSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
-  const classes = useStyles()
+  const theme = useTheme();
 
   return (
     <Snackbar
@@ -87,9 +74,12 @@ const SuccessSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
           <CloseRounded fontSize={"small"} />
         </Button>
       }
-      ContentProps={{
-        className: classes.successSnack,
-      }}
+      css={css({
+        "& .MuiSnackbarContent-root": {
+          backgroundColor: theme.palette.success.main,
+          zIndex: Z_INDEXES.snack,
+        },
+      })}
       TransitionComponent={Slide}
       /**TransitionProps={{
         direction: "left",
@@ -100,7 +90,7 @@ const SuccessSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
 };
 
 const ErrorSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
-  const classes = useStyles()
+  const theme = useTheme();
 
   return (
     <Snackbar
@@ -117,9 +107,12 @@ const ErrorSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
           <CloseRounded fontSize={"small"} />
         </Button>
       }
-      ContentProps={{
-        className: classes.errorSnack,
-      }}
+      css={css({
+        "& .MuiSnackbarContent-root": {
+          backgroundColor: theme.palette.error.main,
+          zIndex: Z_INDEXES.snack,
+        },
+      })}
       TransitionComponent={Slide}
       /**TransitionProps={{
         direction: "left",
@@ -130,7 +123,7 @@ const ErrorSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
 };
 
 const WarningSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
-  const classes = useStyles();
+  const theme = useTheme();
 
   return (
     <Snackbar
@@ -147,9 +140,12 @@ const WarningSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
           <CloseRounded fontSize={"small"} />
         </Button>
       }
-      ContentProps={{
-        className: classes.warningSnack,
-      }}
+      css={css({
+        "& .MuiSnackbarContent-root": {
+          backgroundColor: theme.palette.warning.main,
+          zIndex: Z_INDEXES.snack,
+        },
+      })}
       TransitionComponent={Slide}
       /**TransitionProps={{
         direction: "left",

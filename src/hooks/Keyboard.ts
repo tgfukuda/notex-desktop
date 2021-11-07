@@ -2,19 +2,22 @@ import React, { useRef, useState } from "react";
 
 export type KeyBoards = { [key: string]: boolean | undefined };
 
-let keyboard: KeyBoards = {};
+var keyboard: KeyBoards = {};
 
 type Caret = {
   line: number; // 
   pos: number;
 };
 const useKeyAction = (
-  initCaret: Caret,
   onKeyDown: (keyboard: KeyBoards, e: React.KeyboardEvent<unknown>) => void,
-  onKeyUp?: (keybord: KeyBoards, e: React.KeyboardEvent<unknown>) => void
+  onKeyUp?: (keybord: KeyBoards, e: React.KeyboardEvent<unknown>) => void,
+  initCaret: Caret = {
+    line: 0,
+    pos: 0,
+  },
 ) => {
   const ref: React.RefObject<any> = useRef(null);
-
+  
   /**
    * caret is for completely uncontrolled DOM (like contenteditable)
    * this is not necessary in a common use case
@@ -36,10 +39,6 @@ const useKeyAction = (
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<unknown>) => {
-    console.log({
-      ...keyboard,
-      [e.key]: true,
-    })
     keyboard[e.key] = true;
     onKeyDown(
       {
@@ -50,10 +49,6 @@ const useKeyAction = (
     );
   };
   const handleKeyUp = (e: React.KeyboardEvent<unknown>) => {
-    console.log({
-      ...keyboard,
-      [e.key]: false,
-    })
     keyboard[e.key] = false;
     if (onKeyUp)
       onKeyUp(
@@ -71,6 +66,42 @@ const useKeyAction = (
     handleKeyDown,
     handleKeyUp,
     updateCaret,
+  };
+};
+
+/**
+ * this component is targeting only window and document object.
+ * so, caret is uncontrolled (more efficient object should controll it)
+ */
+export const useNativeKeyAction = (
+  onKeyDown: (keyboard: KeyBoards, evt: KeyboardEvent) => void,
+  onKeyUp?: (keybord: KeyBoards, evt: KeyboardEvent) => void,
+) => {
+  const handleKeyDown = (evt: KeyboardEvent) => {
+    keyboard[evt.key] = true;
+    onKeyDown(
+      {
+        ...keyboard,
+        [evt.key]: true,
+      },
+      evt
+    );
+  };
+  const handleKeyUp = (evt: KeyboardEvent) => {
+    keyboard[evt.key] = false;
+    if (onKeyUp)
+      onKeyUp(
+        {
+          ...keyboard,
+          [evt.key]: false,
+        },
+        evt
+      );
+  };
+
+  return {
+    handleKeyDown,
+    handleKeyUp,
   };
 };
 

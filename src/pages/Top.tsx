@@ -1,4 +1,6 @@
+/** @jsxImportSource @emotion/react */
 import React, { useEffect } from "react";
+import { css } from "@emotion/react";
 import {
   BrowserRouter as Router,
   Route,
@@ -6,35 +8,27 @@ import {
   Redirect,
   useParams,
 } from "react-router-dom";
-import { makeStyles } from "@material-ui/core/styles";
+import { useAppDispatch } from "../redux/hooks";
+import { NoTeXSettings } from "../redux/settings";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-// import EditFile from "./EditFile";
-// import Browse from "./Browse";
-// import View from "./View";
-// import Preview from "../components/Preview";
+import Browse from "./Browse";
+import View from "./View";
 import Home from "./Home";
 import Edit from "./Write";
-import LiveEdit from "./Edit";
-// import Settings from "./Settings";
-// import Test from "./test";
-// import { getRequest } from "../api/get";
-// import { NoTeXSettings } from "../redux/reducers/settings";
+import Settings from "./Setting";
 import Tauritest from "./Tauritest";
-import useCommand from "../api/command";
+import useCommand, { Response } from "../api/command";
 
-const useStyles = makeStyles((theme) => ({
-  main: {
-    minHeight: "70vh",
-  },
-}));
-
-const Main = () => {
-  const classes = useStyles();
+const Main: React.FC = () => {
   const { route } = useParams<Record<string, string | undefined>>();
 
   return (
-    <main className={classes.main}>
+    <main
+      css={css({
+        minHeight: "70vh",
+      })}
+    >
       {(() => {
         switch (route) {
           case "home":
@@ -43,12 +37,12 @@ const Main = () => {
             return <Edit />;
           // case "edit":
           //   return <EditFile />;
-          // case "browse":
-          //   return <Browse />;
-          // case "view":
-          //   return <View />;
-          // case "settings":
-          //   return <Settings />;
+          case "browse":
+            return <Browse />;
+          case "view":
+            return <View />;
+          case "settings":
+            return <Settings />;
           case "test":
             return <Tauritest />;
           default:
@@ -59,13 +53,20 @@ const Main = () => {
   );
 };
 
-const Top = () => {
+const Top: React.FC = () => {
   const { getSetting } = useCommand();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     (async () => {
-      await getSetting();
-    })()
+      const setting = await getSetting().catch((err) => {
+        let { code, message } = err as Response;
+        console.error(code, message);
+      });
+      if (setting) {
+        dispatch(NoTeXSettings.setSettings(setting));
+      }
+    })();
   }, []);
 
   return (
