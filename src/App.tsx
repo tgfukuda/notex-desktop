@@ -58,13 +58,13 @@ function App() {
   return (
     <React.StrictMode>
       <ThemeProvider theme={theme}>
-        <ModalContextProvider>
-          <SnackContextProvider>
-            <ReduxProvider store={store}>
+        <ReduxProvider store={store}>
+          <ModalContextProvider>
+            <SnackContextProvider>
               <Top />
-            </ReduxProvider>
-          </SnackContextProvider>
-        </ModalContextProvider>
+            </SnackContextProvider>
+          </ModalContextProvider>
+        </ReduxProvider>
       </ThemeProvider>
     </React.StrictMode>
   );

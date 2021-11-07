@@ -106,6 +106,9 @@ const Section: React.FC<SectionProps> = ({ level, children }) => {
   );
 };
 
+/**
+ * this component also not optimized as Mermaid
+ */
 type FunctionGraphData = {
   func: string;
   domain: {
@@ -121,13 +124,13 @@ const Graph: CodeComponent = ({ node, children, ...props }) => {
   };
   let func = "";
   for (const line of lines) {
-    if (line.startsWith("min:")) {
+    if (line.startsWith("min=")) {
       domain.min = line.slice(4).trim();
-    } else if (line.startsWith("max:")) {
+    } else if (line.startsWith("max=")) {
       domain.max = line.slice(4).trim();
-    } else if (line.startsWith("division:")) {
+    } else if (line.startsWith("division=")) {
       domain.division = line.slice(9).trim();
-    } else if (line.startsWith("func:")) {
+    } else if (line.startsWith("func=")) {
       func = line.slice(5).trim();
     }
   }
@@ -361,7 +364,6 @@ const Markdown: React.FC<MarkdownProps> = ({ md, container }) => {
             return (
               <a
                 {...props}
-                href={href}
                 onClick={(e) => {
                   e.preventDefault();
                   pickEl(

@@ -20,9 +20,9 @@ import {
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ImageIcon from "@mui/icons-material/Image";
-import useCommand from "../api/command";
-import { useWrite, useAppDispatch, useSettings } from "../redux/hooks";
-import { Write, Meta } from "../redux/write";
+import useCommand, { Response } from "../api/command";
+import { useSettings } from "../redux/hooks";
+import { Meta } from "../redux/write";
 import { useSnackHandler } from "../context/SnackHandler";
 import useKeyAction, { useNativeKeyAction } from "../hooks/Keyboard";
 import writeMsg from "../utils/constant/write/write";
@@ -318,6 +318,12 @@ const Controler: React.FC<ControlerProps> = ({
   );
 };
 
+enum ShouldUpdate {
+  USERIN = 0,
+  WAIT,
+  DONE,
+}
+
 type RawInputProps = {
   raw: string;
   handleRaw: (arg: string) => void;
@@ -409,12 +415,6 @@ const Preview: React.FC<{
   );
 };
 
-enum ShouldUpdate {
-  USERIN = 0,
-  WAIT,
-  DONE,
-}
-
 type Data = {
   raw: string;
   load: ShouldUpdate;
@@ -445,16 +445,15 @@ const Edit: React.FC = () => {
   const { saveDocument, getDocument } = useCommand();
   const handleSave = async () => {
     if (meta?.filename) {
-      await saveDocument(
-        meta,
-        raw,
-        overwrite.current,
-        (res) => {
-          handleSuc(res.message);
-          overwrite.current = true;
-        },
-        (err) => handleErr(err.message)
+      const res = await saveDocument(meta, raw, overwrite.current).catch(
+        (err) => {
+          handleErr((err as Response).message);
+        }
       );
+      if (res) {
+        handleSuc(res.message);
+        overwrite.current = true;
+      }
     } else {
       handleErr("File Name must contain at least one character");
     }
@@ -478,14 +477,15 @@ const Edit: React.FC = () => {
 
     if (location.search) {
       (async () => {
-        await getDocument(
-          location.state as Meta,
-          (body) => setRaw(body),
-          (err) => handleErr(err.message)
-        ).then(() => {
+        const body = await getDocument(location.state as Meta).catch((err) =>
+          handleErr((err as Response).message)
+        );
+
+        if (body) {
+          setRaw(body);
           setMeta(location.state as Meta);
           overwrite.current = true;
-        });
+        }
       })();
     }
 

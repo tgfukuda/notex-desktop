@@ -63,7 +63,7 @@ const settingsSlice = createSlice({
     }>) {
       state.key_bindings[action.payload.key] = "";
     },
-    setSettings(state, action) {
+    setSettings(state, action: PayloadAction<SettingType>) {
       return action.payload;
     },
   },

@@ -8,19 +8,17 @@ import {
   Redirect,
   useParams,
 } from "react-router-dom";
+import { useAppDispatch } from "../redux/hooks";
+import { NoTeXSettings } from "../redux/settings";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-// import EditFile from "./EditFile";
 import Browse from "./Browse";
 import View from "./View";
-// import Preview from "../components/Preview";
 import Home from "./Home";
 import Edit from "./Write";
 import Settings from "./Setting";
-// import { getRequest } from "../api/get";
-// import { NoTeXSettings } from "../redux/reducers/settings";
 import Tauritest from "./Tauritest";
-import useCommand from "../api/command";
+import useCommand, { Response } from "../api/command";
 
 const Main: React.FC = () => {
   const { route } = useParams<Record<string, string | undefined>>();
@@ -57,10 +55,17 @@ const Main: React.FC = () => {
 
 const Top: React.FC = () => {
   const { getSetting } = useCommand();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     (async () => {
-      await getSetting();
+      const setting = await getSetting().catch((err) => {
+        let { code, message } = err as Response;
+        console.error(code, message);
+      });
+      if (setting) {
+        dispatch(NoTeXSettings.setSettings(setting));
+      }
     })();
   }, []);
 

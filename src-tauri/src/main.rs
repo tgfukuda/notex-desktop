@@ -5,6 +5,10 @@
 
 extern crate app;
 
+/**
+ * there's only command related to fs for now
+ * but potentialy other like exec, multiple window, ...etc
+ */
 use app::command;
 use app::Casher;
 

@@ -46,14 +46,14 @@ impl Response {
   fn process_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
     println!("{:?}", message);
     Response {
-      code: Code::ClientError,
+      code: Code::ProcessError,
       message: format!("{}\n{}", "Internal Process Error", message.to_string()),
     }
   }
 }
 
 #[tauri::command]
-pub fn get_setting(env: State<Env>) -> Setting {
+pub fn get_setting(env: State<'_, Env>) -> Setting {
   match env.0.lock() {
     Ok(setting) => setting.clone(),
     Err(_) => get_setting(env.clone()),
@@ -87,8 +87,8 @@ pub struct SaveDoc {
 #[tauri::command]
 pub fn save_document(
   document: SaveDoc,
-  env: State<Env>,
-  cashe: State<Casher>,
+  env: State<'_, Env>,
+  cashe: State<'_, Casher>,
 ) -> Result<Response, Response> {
   let setting = env.0.lock().map_err(Response::new)?.clone();
   let Memo {
@@ -108,11 +108,9 @@ pub fn save_document(
     BufReader::new(File::open(crate::index_path()).map_err(Response::process_error)?).lines();
   for line in lines {
     let line = line.map_err(Response::new)?;
-    if !line.is_empty() {
-      let meta_i = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
-      if meta != meta_i {
-        new_index.push(line);
-      }
+    let line_meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+    if !line.is_empty() && meta.get_hashed_filename() != line_meta.get_hashed_filename() {
+      new_index.push(line);
     }
   }
   new_index
@@ -127,8 +125,9 @@ pub fn save_document(
   .and_then(|_| {
     OpenOptions::new()
       .write(true)
+      .append(false)
       .truncate(true)
-      .create(true)
+      .create_new(true)
       .open(path)
       .map_err(Response::process_error)
   })
@@ -140,6 +139,7 @@ pub fn save_document(
   .and_then(|_| {
     OpenOptions::new()
       .write(true)
+      .append(false)
       .truncate(true)
       .create(false)
       .open(crate::index_path())
@@ -175,18 +175,21 @@ pub fn delete_file(
     mut all_tags,
     mut page,
   } = cashe.0.lock().map_err(Response::process_error)?.clone();
-  let path = setting.path_to_file(&target.get_hashed_filename());
+  let target_name = target.get_hashed_filename();
+  let path = setting.path_to_file(&target_name);
   let mut new_index = vec![];
   let lines =
     BufReader::new(File::open(crate::index_path()).map_err(Response::process_error)?).lines();
 
   for line in lines {
     let line = line.map_err(Response::process_error)?;
-    let meta = serde_json::from_str(&line).map_err(Response::process_error)?;
-    if target != meta {
+    let meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+    if target_name != meta.get_hashed_filename() {
       new_index.push(line);
     }
   }
+
+  println!("{:?}", new_index);
 
   fs::remove_file(path)
     .map_err(Response::process_error)

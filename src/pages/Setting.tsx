@@ -12,8 +12,9 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { SettingType, languages, Language } from "../redux/settings";
-import { useSettings } from "../redux/hooks";
-import useCommand from "../api/command";
+import { useAppDispatch, useSettings } from "../redux/hooks";
+import { NoTeXSettings } from "../redux/settings";
+import useCommand, { Response } from "../api/command";
 import { useSnackHandler } from "../context/SnackHandler";
 import utilMsg from "../utils/constant/util";
 import settingMsg from "../utils/constant/setting";
@@ -36,18 +37,22 @@ const Settings: React.FC = () => {
   const theme = useTheme();
   const { handleSuc, handleErr } = useSnackHandler();
   const [langOpen, setLangOpen] = useState(false);
+  const dispatch = useAppDispatch();
   const [temp, setTemp] = useState<SettingType>(useSettings());
   const msgs = {
     ...utilMsg(temp.language),
     ...settingMsg(temp.language),
   };
-  const { updateSetting, getSetting } = useCommand();
-  const handleUpdate = () => {
-    updateSetting(
-      temp,
-      (res) => handleSuc(res.message),
-      (err) => handleErr(err.message)
-    ).then(() => getSetting());
+  const { updateSetting } = useCommand();
+  const handleUpdate = async () => {
+    const res = await updateSetting(temp).catch((err) => {
+      handleErr((err as Response).message);
+    });
+
+    if (res) {
+      handleSuc(res.message);
+      dispatch(NoTeXSettings.setSettings(temp));
+    }
   };
 
   return (

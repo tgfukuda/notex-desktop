@@ -21,7 +21,7 @@ import {
 } from "@mui/icons-material";
 import useModal from "../context/Modal";
 import { useSnackHandler } from "../context/SnackHandler";
-import useCommand from "../api/command";
+import useCommand, { Response } from "../api/command";
 import { useSettings } from "../redux/hooks";
 import { RequestDocs, ResponseDocs } from "../api/command";
 import { Meta } from "../redux/write";
@@ -459,20 +459,22 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
     });
   };
 
-  const handleDelete = (target: Meta) => () => {
-    deleteFile(
-      target,
-      (res) => handleSuc(res.message),
-      (err) => handleErr(err.message)
-    ).then(() => {
+  const handleDelete = (target: Meta) => async () => {
+    const res = await deleteFile(target).catch((err) =>
+      handleErr((err as Response).message)
+    );
+
+    if (res) {
+      handleSuc(res.message);
       exit();
       handleLoad();
-    });
+    }
   };
 
   const handleChange =
     (meta: Meta) => (_: React.ChangeEvent<{}>, isExpanded: boolean) => {
       setExpanded(isExpanded ? "controll_of_" + meta.filename : "");
+      console.log("meta", meta)
       setModal(
         <DeleteModal meta={meta} handleDelete={handleDelete} exit={exit} />
       );
@@ -598,15 +600,17 @@ const Browse: React.FC = () => {
   });
 
   useEffect(() => {
-    getDocumentsByFilter(requestOption, setResult, (err) =>
-      handleErr(err.message)
-    )
-      .then(() => {
-        setLoad(true);
-      })
-      .catch(() => {
+    (async () => {
+      const res = await getDocumentsByFilter(requestOption).catch((err) => {
+        handleErr((err as Response).message);
         setLoad(false);
-      }); //unimplemented
+      });
+
+      if (res) {
+        setResult(res);
+        setLoad(true);
+      }
+    })()
   }, [load]);
 
   return (

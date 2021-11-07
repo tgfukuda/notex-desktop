@@ -2,7 +2,6 @@ import React, {
   useState,
   useContext,
   createContext,
-  useMemo,
   useEffect,
   useRef,
 } from "react";
@@ -37,7 +36,7 @@ export const ModalContextProvider: React.FC = ({ children }) => {
     <ModalContext.Provider value={value}>
       <div
         className={"overlay" + (hidden ? " hidden" : "")}
-        onClick={() => exit()}
+        onClick={exit}
       >
         <div className={"modal"} onClick={(e) => e.stopPropagation()}>
           <div className={"modal-contents"}>{modal}</div>
@@ -56,8 +55,7 @@ const useModal = (deps: unknown[], onCall?: () => void) => {
    * once setModal set, never change it and no need to add deps
    */
   useEffect(() => {
-    if (hidden) setModal(contents.current);
-    else setModal(null);
+    setModal(contents.current)
     //eslint-disable-next-line
   }, [hidden, ...deps]);
 

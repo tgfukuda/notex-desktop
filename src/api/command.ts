@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api";
-import { useAppDispatch } from "../redux/hooks";
-import { NoTeXSettings, SettingType } from "../redux/settings";
+import { SettingType } from "../redux/settings";
 import { Meta } from "../redux/write";
 
-type Response = {
+export type Response = {
   code: number;
   message: string;
 };
@@ -30,93 +29,57 @@ export type ResponseDocs = {
 };
 
 const useCommand = () => {
-  const dispatch = useAppDispatch();
-
   return {
-    getSetting: async (callBack?: (arg: SettingType) => void) => {
+    getSetting: async () => {
       try {
-        const setting = (await invoke("get_setting")) as SettingType;
-
-        console.log(setting);
-        if (callBack) callBack(setting);
-        else dispatch(NoTeXSettings.setSettings(setting));
+        return (await invoke("get_setting")) as SettingType;
       } catch (err) {
-        console.error(err);
+        throw err as Error;
       }
     },
-    updateSetting: async (
-      setting: SettingType,
-      callBack?: (arg: Response) => void,
-      handleErr?: (arg: Error) => void
-    ) => {
+    updateSetting: async (setting: SettingType) => {
       try {
-        const res = (await invoke("update_setting", {
+        return (await invoke("update_setting", {
           setting,
         })) as Response;
-
-        console.log(res);
-        if (callBack) callBack(res);
       } catch (err) {
-        console.error(err);
-        if (handleErr) handleErr(err as Error);
+        throw err as Error;
       }
     },
-    saveDocument: async (
-      meta: Meta,
-      body: string,
-      overwrite: boolean,
-      callBack?: (arg: Response) => void,
-      handleErr?: (arg: Error) => void
-    ) => {
+    saveDocument: async (meta: Meta, body: string, overwrite: boolean) => {
       try {
-        const res = (await invoke("save_document", {
+        return (await invoke("save_document", {
           document: {
             overwrite,
             meta,
             body,
           },
         })) as Response;
-
-        console.log(res);
-        if (callBack) callBack(res);
       } catch (err) {
-        console.error(err);
-        if (handleErr) handleErr(err as Error);
+        throw err as Error;
       }
     },
-    deleteFile: async (
-      target: Meta,
-      callBack?: (arg: Response) => void,
-      handleErr?: (arg: Error) => void
-    ) => {
+    deleteFile: async (target: Meta) => {
       try {
-        const res = (await invoke("delete_file", {
+        return (await invoke("delete_file", {
           target: target,
         })) as Response;
-
-        console.log(res);
-        if (callBack) callBack(res);
       } catch (err) {
-        console.error(err);
-        if (handleErr) handleErr(err as Error);
+        throw err as Error;
       }
     },
-    getDocumentsByFilter: async (
-      {
-        offset,
-        limit = 15,
-        filename_start = "",
-        filename_contain = "",
-        created_at = ["", ""],
-        updated_at = ["", ""],
-        tags = [],
-        author = "",
-      }: RequestDocs,
-      callBack?: (res: ResponseDocs) => void,
-      handleErr?: (err: Error) => void
-    ) => {
+    getDocumentsByFilter: async ({
+      offset,
+      limit = 15,
+      filename_start = "",
+      filename_contain = "",
+      created_at = ["", ""],
+      updated_at = ["", ""],
+      tags = [],
+      author = "",
+    }: RequestDocs) => {
       try {
-        const res = (await invoke("get_documents_by_filter", {
+        return (await invoke("get_documents_by_filter", {
           req: {
             offset,
             limit,
@@ -128,29 +91,17 @@ const useCommand = () => {
             author,
           },
         })) as ResponseDocs;
-
-        console.log(res);
-        if (callBack) callBack(res);
       } catch (err) {
-        console.error(err);
-        if (handleErr) handleErr(err as Error);
+        throw err as Error;
       }
     },
-    getDocument: async (
-      meta: Meta,
-      callBack?: (arg: string) => void,
-      handleErr?: (arg: Error) => void
-    ) => {
+    getDocument: async (meta: Meta) => {
       try {
-        const res = (await invoke("get_document", {
+        return (await invoke("get_document", {
           meta,
         })) as string;
-
-        console.log(res);
-        if (callBack) callBack(res);
       } catch (err) {
-        console.error(err);
-        if (handleErr) handleErr(err as Error);
+        throw err as Error;
       }
     },
   };
