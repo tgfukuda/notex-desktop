@@ -460,9 +460,10 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
   };
 
   const handleDelete = (target: Meta) => async () => {
-    const res = await deleteFile(target).catch((err) =>
-      handleErr((err as Response).message)
-    );
+    const res = await deleteFile(target).catch((err) => {
+      handleErr((err as Response).message);
+      return undefined;
+    });
 
     if (res) {
       handleSuc(res.message);
@@ -474,7 +475,7 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
   const handleChange =
     (meta: Meta) => (_: React.ChangeEvent<{}>, isExpanded: boolean) => {
       setExpanded(isExpanded ? "controll_of_" + meta.filename : "");
-      console.log("meta", meta)
+      console.log("meta", meta);
       setModal(
         <DeleteModal meta={meta} handleDelete={handleDelete} exit={exit} />
       );
@@ -604,13 +605,14 @@ const Browse: React.FC = () => {
       const res = await getDocumentsByFilter(requestOption).catch((err) => {
         handleErr((err as Response).message);
         setLoad(false);
+        return undefined;
       });
 
       if (res) {
         setResult(res);
         setLoad(true);
       }
-    })()
+    })();
   }, [load]);
 
   return (

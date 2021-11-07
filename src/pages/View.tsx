@@ -29,12 +29,13 @@ const View: React.FC = () => {
   useEffect(() => {
     if (load.status === undefined)
       (async () => {
-        const res = await getDocument(location.state as Meta).catch((err) =>
+        const res = await getDocument(location.state as Meta).catch((err) => {
           setLoad({
             status: false,
             res: (err as Response).message,
-          })
-        );
+          });
+          return undefined;
+        });
 
         if (res) {
           setLoad({

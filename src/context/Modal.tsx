@@ -34,12 +34,9 @@ export const ModalContextProvider: React.FC = ({ children }) => {
 
   return (
     <ModalContext.Provider value={value}>
-      <div
-        className={"overlay" + (hidden ? " hidden" : "")}
-        onClick={exit}
-      >
+      <div className={"overlay" + (hidden ? " hidden" : "")} onClick={exit}>
         <div className={"modal"} onClick={(e) => e.stopPropagation()}>
-          <div className={"modal-contents"}>{modal}</div>
+          {modal}
         </div>
       </div>
       {children}
@@ -51,11 +48,9 @@ const useModal = (deps: unknown[], onCall?: () => void) => {
   const contents = useRef<JSX.Element | null>(null);
   const [setModal, hidden, innerCall, exit] = useContext(ModalContext);
 
-  /**
-   * once setModal set, never change it and no need to add deps
-   */
+  /** once setModal set, never change it and no need to add deps (React.useState) */
   useEffect(() => {
-    setModal(contents.current)
+    setModal(contents.current);
     //eslint-disable-next-line
   }, [hidden, ...deps]);
 

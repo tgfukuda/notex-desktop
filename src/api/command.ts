@@ -7,10 +7,10 @@ export type Response = {
   message: string;
 };
 
-type Error = {
-  code: number;
+interface ErrorResponse extends Error {
+  code: string;
   message: string;
-};
+}
 
 export type RequestDocs = {
   offset: number;
@@ -34,7 +34,7 @@ const useCommand = () => {
       try {
         return (await invoke("get_setting")) as SettingType;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
     updateSetting: async (setting: SettingType) => {
@@ -43,7 +43,7 @@ const useCommand = () => {
           setting,
         })) as Response;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
     saveDocument: async (meta: Meta, body: string, overwrite: boolean) => {
@@ -56,7 +56,7 @@ const useCommand = () => {
           },
         })) as Response;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
     deleteFile: async (target: Meta) => {
@@ -65,7 +65,7 @@ const useCommand = () => {
           target: target,
         })) as Response;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
     getDocumentsByFilter: async ({
@@ -92,7 +92,7 @@ const useCommand = () => {
           },
         })) as ResponseDocs;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
     getDocument: async (meta: Meta) => {
@@ -101,7 +101,7 @@ const useCommand = () => {
           meta,
         })) as string;
       } catch (err) {
-        throw err as Error;
+        throw err as ErrorResponse;
       }
     },
   };

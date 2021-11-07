@@ -47,6 +47,7 @@ const Settings: React.FC = () => {
   const handleUpdate = async () => {
     const res = await updateSetting(temp).catch((err) => {
       handleErr((err as Response).message);
+      return undefined;
     });
 
     if (res) {

@@ -9,6 +9,9 @@ export type Meta = {
   shortcut: {[command: string]: string}
 };
 
+/**
+ * unused cuz markdown computation is applied to react-markdown (ast, madast, remark, rehype plugin)
+ */
 const initialState = {
   filename: "test",
   created_at: "",

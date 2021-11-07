@@ -53,6 +53,10 @@ const Main: React.FC = () => {
   );
 };
 
+/**
+ * for desktop app, I think header and footer is not needed like VSCode.
+ * remove them and add Side nav or handle them with Menu Icon of the window.
+ */
 const Top: React.FC = () => {
   const { getSetting } = useCommand();
   const dispatch = useAppDispatch();
@@ -62,6 +66,7 @@ const Top: React.FC = () => {
       const setting = await getSetting().catch((err) => {
         let { code, message } = err as Response;
         console.error(code, message);
+        return undefined;
       });
       if (setting) {
         dispatch(NoTeXSettings.setSettings(setting));

@@ -117,48 +117,41 @@ pub fn save_document(
     .push(serde_json::to_string(&meta).map_err(|_| Response::client_error("Invalid format."))?);
 
   let path = setting.path_to_file(&filename);
-  if !overwrite && path.exists() {
-    Err(Response::process_error("File already exists."))
-  } else {
-    Ok(())
-  }
-  .and_then(|_| {
-    OpenOptions::new()
-      .write(true)
-      .append(false)
-      .truncate(true)
-      .create_new(true)
-      .open(path)
-      .map_err(Response::process_error)
-  })
-  .and_then(|mut writer| {
-    writer
-      .write_all(&body.as_bytes())
-      .map_err(Response::process_error)
-  })
-  .and_then(|_| {
-    OpenOptions::new()
-      .write(true)
-      .append(false)
-      .truncate(true)
-      .create(false)
-      .open(crate::index_path())
-      .map_err(Response::process_error)
-  })
-  .and_then(|mut writer| {
-    writer
-      .write_all(new_index.join("\n").as_bytes())
-      .map_err(Response::process_error)
-  })
-  .map(|_| {
-    all_tags = all_tags
-      .union(&meta.get_into_tag().into_iter().collect())
-      .map(|s| s.clone())
-      .collect();
-    page += 1;
-    println!("page: {}, all_tags: {:?}", page, all_tags);
-    Response::new("File successfully saved")
-  })
+  OpenOptions::new()
+    .write(true)
+    .append(false)
+    .truncate(true)
+    .create_new(!overwrite)
+    .open(path)
+    .map_err(Response::process_error)
+    .and_then(|mut writer| {
+      writer
+        .write_all(&body.as_bytes())
+        .map_err(Response::process_error)
+    })
+    .and_then(|_| {
+      OpenOptions::new()
+        .write(true)
+        .append(false)
+        .truncate(true)
+        .create(false)
+        .open(crate::index_path())
+        .map_err(Response::process_error)
+    })
+    .and_then(|mut writer| {
+      writer
+        .write_all(new_index.join("\n").as_bytes())
+        .map_err(Response::process_error)
+    })
+    .map(|_| {
+      all_tags = all_tags
+        .union(&meta.get_into_tag().into_iter().collect())
+        .map(|s| s.clone())
+        .collect();
+      page += 1;
+      println!("page: {}, all_tags: {:?}", page, all_tags);
+      Response::new("File successfully saved")
+    })
 }
 
 /**

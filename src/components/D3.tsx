@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from "react";
 import { css } from "@emotion/react";
 import * as d3 from "d3";
+import { CircularProgress } from "@mui/material";
 
 function calc(
   op: string,
@@ -133,7 +134,7 @@ export function parseFormula(
             left: _var,
             right: undefined,
           };
-        else throw "Parse Error";
+        else throw new Error("Parse Error");
 
         _num = "";
         _var = "";
@@ -164,8 +165,8 @@ export function parseFormula(
                 right: undefined,
               };
             }
-          } else throw "Parse Error";
-        } else throw "Parse Error";
+          } else throw new Error("Parse Error");
+        } else throw new Error("Parse Error");
 
         _num = "";
         _var = "";
@@ -187,15 +188,15 @@ export function parseFormula(
               },
               right: undefined,
             };
-          } else throw "Parse Error";
-        } else throw "Parse Error";
+          } else throw new Error("Parse Error");
+        } else throw new Error("Parse Error");
 
         _num = "";
         _var = "";
         accumulator = "";
       } else if (!isNumeral(char) && !_num && !accumulator) _var += char;
       else if (!_var && !accumulator) _num += char;
-      else throw "Parse Error";
+      else throw new Error("Parse Error");
     } else if (0 < braCnt) {
       if (char === ")") {
         braCnt--;
@@ -208,15 +209,15 @@ export function parseFormula(
                 left: flag.left,
                 right: arg2,
               };
-            } else throw "Parse Error";
+            } else throw new Error("Parse Error");
           } else if (typeof accumulator === "string" && accumulator)
             accumulator = parseFormula(accumulator);
-          else throw "Parse Error";
+          else throw new Error("Parse Error");
           continue;
         }
       } else if (char === "(") braCnt++;
       accumulator += char;
-    } else throw "Parse Error";
+    } else throw new Error("Parse Error");
   }
 
   if (mapping.right === undefined)
@@ -225,7 +226,7 @@ export function parseFormula(
   if (mapping.operator === undefined) {
     const res = mapping.left || mapping.right;
     if (res !== undefined) return res;
-    else throw "Parse Error";
+    else throw new Error("Parse Error");
   }
 
   return mapping;
@@ -269,7 +270,7 @@ export const reduction: (
     }
 
     const res = await __inner(x, parsedFunction);
-    if (typeof res === "string") throw "Invalid Argument";
+    if (typeof res === "string") throw new Error("Invalid Argument");
     else return res;
   };
 
@@ -289,9 +290,11 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
     x: c.x,
     y: 0,
   }));
+  const chartRef = useRef(null);
 
-  const chartRef = useD3(
-    (svg) => {
+  useEffect(() => {
+    if (chartRef.current) {
+      const svg = d3.select(chartRef.current);
       const height = 480;
       const width = 928;
       const margin = { top: 20, right: 40, bottom: 30, left: 40 };
@@ -358,18 +361,22 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
         .attr("stroke-miterlimit", "1");
 
       svg.attr("viewBox", `0 0 ${width} ${height}`);
-    },
-    [...data]
-  );
+    }
+  });
 
   return (
     <div
       css={css({
         width: "100%",
-        height: 350,
+        minHeight: data.length ? undefined : 300,
       })}
     >
-      <svg ref={chartRef}>
+      <svg
+        ref={chartRef}
+        css={css({
+          display: data.length ? "block" : "none",
+        })}
+      >
         <path className="plot-area" />
         <path className="plot-line-0-area" />
         <g className="x-axis" />
@@ -379,6 +386,9 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
   );
 };
 
+/**
+ * TODO -- remove any
+ */
 const useD3 = (renderChartFn: (el: any) => void, deps: unknown[]) => {
   const ref: React.RefObject<any> = useRef(null);
 

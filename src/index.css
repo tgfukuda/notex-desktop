@@ -61,10 +61,6 @@ code {
   align-items: flex-start;
 }
 
-.modal-contents {
-  width: 100%;
-}
-
 .hidden {
   display: none;
 }

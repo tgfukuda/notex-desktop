@@ -29,8 +29,10 @@ import writeMsg from "../utils/constant/write/write";
 import Markdown from "../components/Markdown";
 import { Z_INDEXES } from "../utils/constant/util";
 
+const contentsHeight = 80;
+
 const scrollable = css({
-  height: "80vh",
+  height: contentsHeight + "vh",
   overflow: "scroll",
   "&::-webkit-scrollbar": {
     width: "6px",
@@ -39,7 +41,7 @@ const scrollable = css({
   },
   "&::-webkit-scrollbar-thumb": {
     borderRadius: "5px",
-    "-webkit-box-shadow": "inset 0 0 6px rgba(0, 0, 0, 0.1)",
+    WebkitBoxShadow: "inset 0 0 6px rgba(0, 0, 0, 0.1)",
     backgroundImage:
       "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
   },
@@ -53,7 +55,7 @@ const useInputControll = (handleImageUrl: (url: string) => void) => {
       handleImageUrl(e.target.result);
   };
   const handleChange = (_: ChangeEvent) => {
-    if (inputRef.current && inputRef.current.files)
+    if (inputRef.current && inputRef.current.files?.length)
       reader.readAsDataURL(inputRef.current.files[0]);
   };
 
@@ -101,6 +103,7 @@ const Controler: React.FC<ControlerProps> = ({
     width: "30vw",
     minHeight: "5vh",
   });
+  const buttons = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [tagIdx, setTagIdx] = useState<number>(-1);
   const [tag, setTag] = useState("");
@@ -140,6 +143,7 @@ const Controler: React.FC<ControlerProps> = ({
   return (
     <>
       <div
+        ref={buttons}
         css={css({
           width: "100%",
           display: "flex",
@@ -169,7 +173,7 @@ const Controler: React.FC<ControlerProps> = ({
         <PostButton handleSave={handleSave} />
         <input
           type={"file"}
-          accept={".png,.jpg,.jpeg,.gif,.pdf"}
+          accept={".png,.jpg,.jpeg,.gif"}
           ref={inputRef}
           onChange={handleChange}
           css={css({
@@ -177,143 +181,140 @@ const Controler: React.FC<ControlerProps> = ({
           })}
         />
       </div>
-      <div
+      <Collapse
+        in={open}
+        orientation={"horizontal"}
         css={css`
-          postion: sticky;
-          display: ${open ? "block" : "none"};
-          top: 0;
+          position: absolute;
+          top: ${buttons.current?.clientHeight || 0}px;
           left: 0;
-          height: 100vh;
-          width: 100vw;
-          background-color: rgba(100, 100, 100, 0.8);
+          height: ${contentsHeight}%;
+          background-color: ${theme.palette.info.main};
+          color: ${theme.palette.text.secondary};
           z-index: ${Z_INDEXES.overlay.ground};
         `}
-        onClick={() => setOpen(false)}
       >
-        <Collapse
-          in={open}
-          orientation={"horizontal"}
+        <ul
+          onClick={(e) => e.stopPropagation()}
           css={css`
-            position: relative;
-            top: 10%;
-            left: 0;
-            height: 100vh;
+            height: 100%;
+            width: 100%;
             z-index: ${Z_INDEXES.overlay.main};
           `}
         >
-          <ul>
-            <li>
-              <TextField
-                label={"filename"}
-                defaultValue={meta.filename}
-                onClick={handleStop}
-                onBlur={(e) =>
-                  setMeta({
-                    ...meta,
-                    filename: e.target.value,
-                  })
-                }
-                css={field}
-              />
-            </li>
-            <li>
-              <TextField
-                label={"author"}
-                defaultValue={meta.author}
-                onClick={handleStop}
-                onBlur={(e) =>
-                  setMeta({
-                    ...meta,
-                    author: e.target.value,
-                  })
-                }
-                css={field}
-              />
-            </li>
-            <li>
-              <Paper
-                component={"ul"}
-                variant={"outlined"}
-                onClick={handleStop}
-                css={[
-                  css({
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                    listStyle: "none",
-                    padding: theme.spacing(0.5),
-                    margin: 0,
-                    overflowY: "scroll",
-                    "&::-webkit-scrollbar": {
-                      width: "6px",
-                      height: "6px",
-                    },
-                  }),
-                  field,
-                ]}
-              >
-                {meta.tags.map((tagName, i) => {
-                  return (
-                    <li key={"metadata_tag_" + i}>
-                      {tagIdx === i ? (
-                        <TextField
-                          label={"tag"}
-                          value={tag}
-                          autoFocus
-                          onKeyDown={handleKeyDown}
-                          onKeyUp={handleKeyUp}
-                          onChange={(e) => setTag(e.target.value)}
-                          key={"file_metadata_tag_" + i}
-                        />
-                      ) : (
-                        <Chip
-                          label={
-                            20 < tagName.length
-                              ? tagName.slice(0, 20) + "..."
-                              : tagName
-                          }
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTagIdx(i);
-                            setTag(tagName);
-                          }}
-                          onDelete={() =>
-                            setMeta({
-                              ...meta,
-                              tags: [
-                                ...meta.tags.slice(0, i),
-                                ...meta.tags.slice(i + 1),
-                              ],
-                            })
-                          }
-                          key={"file_metadata_tag_" + i}
-                          css={css({
-                            margin: theme.spacing(0.5),
-                            backgroundColor: "#E3E3E3",
-                          })}
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-                {tagIdx === -1 && (
-                  <li>
-                    <TextField
-                      label={"tag"}
-                      value={tag}
-                      onClick={handleStop}
-                      onKeyDown={handleKeyDown}
-                      onKeyUp={handleKeyUp}
-                      onChange={(e) => setTag(e.target.value)}
-                    />
+          <li>
+            <TextField
+              label={"filename"}
+              defaultValue={meta.filename}
+              onClick={handleStop}
+              onBlur={(e) =>
+                setMeta({
+                  ...meta,
+                  filename: e.target.value,
+                })
+              }
+              css={field}
+            />
+          </li>
+          <li>
+            <TextField
+              label={"author"}
+              defaultValue={meta.author}
+              onClick={handleStop}
+              onBlur={(e) =>
+                setMeta({
+                  ...meta,
+                  author: e.target.value,
+                })
+              }
+              css={field}
+            />
+          </li>
+          <li>
+            <Paper
+              component={"ul"}
+              variant={"outlined"}
+              onClick={handleStop}
+              css={[
+                css({
+                  display: "flex",
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  listStyle: "none",
+                  padding: theme.spacing(0.5),
+                  margin: 0,
+                  overflowY: "scroll",
+                  "&::-webkit-scrollbar": {
+                    width: "6px",
+                    height: "6px",
+                  },
+                  "& li::marker": {
+                    display: "none"
+                  }
+                }),
+                field,
+              ]}
+            >
+              {meta.tags.map((tagName, i) => {
+                return (
+                  <li key={"metadata_tag_" + i}>
+                    {tagIdx === i ? (
+                      <TextField
+                        label={"tag"}
+                        value={tag}
+                        autoFocus
+                        onKeyDown={handleKeyDown}
+                        onKeyUp={handleKeyUp}
+                        onChange={(e) => setTag(e.target.value)}
+                        key={"file_metadata_tag_" + i}
+                      />
+                    ) : (
+                      <Chip
+                        label={
+                          20 < tagName.length
+                            ? tagName.slice(0, 20) + "..."
+                            : tagName
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTagIdx(i);
+                          setTag(tagName);
+                        }}
+                        onDelete={() =>
+                          setMeta({
+                            ...meta,
+                            tags: [
+                              ...meta.tags.slice(0, i),
+                              ...meta.tags.slice(i + 1),
+                            ],
+                          })
+                        }
+                        key={"file_metadata_tag_" + i}
+                        css={css({
+                          margin: theme.spacing(0.5),
+                        })}
+                      />
+                    )}
                   </li>
-                )}
-              </Paper>
-            </li>
-          </ul>
-        </Collapse>
-      </div>
+                );
+              })}
+              {tagIdx === -1 && (
+                <li>
+                  <TextField
+                    label={"tag"}
+                    value={tag}
+                    onClick={handleStop}
+                    onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
+                    onChange={(e) => setTag(e.target.value)}
+                  />
+                </li>
+              )}
+            </Paper>
+          </li>
+        </ul>
+      </Collapse>
     </>
   );
 };
@@ -444,10 +445,12 @@ const Edit: React.FC = () => {
   const { handleSuc, handleErr } = useSnackHandler();
   const { saveDocument, getDocument } = useCommand();
   const handleSave = async () => {
+    console.log(overwrite.current);
     if (meta?.filename) {
       const res = await saveDocument(meta, raw, overwrite.current).catch(
         (err) => {
           handleErr((err as Response).message);
+          return undefined;
         }
       );
       if (res) {
@@ -477,14 +480,17 @@ const Edit: React.FC = () => {
 
     if (location.search) {
       (async () => {
-        const body = await getDocument(location.state as Meta).catch((err) =>
-          handleErr((err as Response).message)
-        );
+        const body = await getDocument(location.state as Meta).catch((err) => {
+          handleErr((err as Response).message);
+          return undefined;
+        });
 
         if (body) {
           setRaw(body);
           setMeta(location.state as Meta);
           overwrite.current = true;
+          console.log(overwrite.current);
+          setLoad(ShouldUpdate.USERIN);
         }
       })();
     }
@@ -503,6 +509,7 @@ const Edit: React.FC = () => {
       justifyContent={"space-evenly"}
       alignItems={"stretch"}
       css={css({
+        position: "relative",
         width: "100vw",
         height: "100%",
         margin: theme.spacing(0.5),
@@ -516,7 +523,6 @@ const Edit: React.FC = () => {
       />
       <RawInput raw={raw} handleRaw={handleRaw} />
       <Preview data={{ raw, load }} setLoad={setLoad} />
-      <PostButton handleSave={handleSave} />
     </Grid>
   );
 };

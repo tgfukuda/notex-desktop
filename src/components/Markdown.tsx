@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { css, useTheme } from "@emotion/react";
-import { Typography, CircularProgress } from "@mui/material";
+import { Typography } from "@mui/material";
 import { Variant } from "@mui/material/styles/createTypography";
 import { FunctionD3, parseFormula, reduction, Coordinate } from "./D3";
 import useScroll from "../hooks/Scroll";
@@ -55,23 +55,29 @@ const Mermaid: CodeComponent = ({ node, children, ...props }) => {
   return <div className={"mermaid"} ref={ref} />;
 };
 
+/**
+ * this regex is currently work, but hopefully get it by remark plugin.
+ */
+const regex = /!|\?|,|\s/g;
 type SectionProps = { level: number };
 const Section: React.FC<SectionProps> = ({ level, children }) => {
   const theme = useTheme();
   const ref = useRef<HTMLDivElement>(null);
   const { addEl, removeEl } = useScroll();
   const sectionMsgs = sectionMsg(useSettings()["language"]);
-  console.log(
-    "children",
-    String(children).toLowerCase().replaceAll(" ", "-").replaceAll(/!|\?/g, "")
-  );
   const idx = crypto
     .createHash("sha256")
     .update(
       String(children)
         .toLowerCase()
-        .replaceAll(" ", "-")
-        .replaceAll(/!|\?/g, ""),
+        .replaceAll(regex, (match) => {
+          switch (match) {
+            case " ":
+              return "-";
+            default:
+              return "";
+          }
+        }),
       "utf8"
     )
     .digest("hex");
@@ -87,7 +93,7 @@ const Section: React.FC<SectionProps> = ({ level, children }) => {
   return (
     <Typography
       id={idx}
-      variant={4 < level ? "h6" : (("h" + (level + 2)) as Variant)}
+      variant={("h" + Math.min(6, level + 2)) as Variant}
       ref={ref}
       css={css({
         width: "99.5%",
@@ -135,15 +141,18 @@ const Graph: CodeComponent = ({ node, children, ...props }) => {
     }
   }
 
-  const [min, max, division] =
-    Number.isNaN(domain.min) ||
-    Number.isNaN(domain.max) ||
-    Number.isNaN(domain.division) ||
-    Number(domain.max) <= Number(domain.min) ||
-    !Number.isInteger(Number(domain.division)) ||
-    Number(domain.division) < 2
-      ? [0, 1, 100]
-      : [Number(domain.min), Number(domain.max), Number(domain.division)];
+  const min =
+    Number.isNaN(domain.min) || Number(domain.max) <= Number(domain.min)
+      ? 0
+      : Number(domain.min);
+  const max =
+    Number.isNaN(domain.max) || Number(domain.max) <= Number(domain.min)
+      ? 1
+      : Number(domain.max);
+  const division =
+    !Number.isInteger(Number(domain.division)) || Number(domain.division) < 2
+      ? 100
+      : Number(domain.division);
 
   const parseResult = useMemo(() => {
     try {
@@ -172,18 +181,7 @@ const Graph: CodeComponent = ({ node, children, ...props }) => {
     })();
   }, [func, min, max, division]);
 
-  return load.length === 0 ? (
-    <div
-      css={css({
-        width: "100%",
-        height: 350,
-      })}
-    >
-      <CircularProgress />
-    </div>
-  ) : (
-    <FunctionD3 data={load} />
-  );
+  return <FunctionD3 data={load} />;
 };
 
 const table = css`
@@ -191,23 +189,22 @@ const table = css`
   display: flex;
   flex-direction: column;
   overflow-x: auto;
-  thead: {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    width: 100%;
-    background-color: rgba(48, 48, 48, 0.15);
-  },
-  tbody: {
-    tr: {
-      margin: 0;
-      padding: 0,
-      display: flex;
-      flex-basis: 100%;
-      &:hover: {
-        background-color: rgba(200, 200, 200, 0.25),
-      },
-    }
+`;
+
+const thead = css`
+  margin: 0;
+  padding: 0;
+  display: flex;
+  width: 100%;
+`;
+
+const tr = css`
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-basis: 100%;
+  &:hover {
+    background-color: rgba(200, 200, 200, 0.25);
   }
 `;
 
@@ -219,7 +216,7 @@ const TableContainer:
     >
   | ReactMarkdownNames = ({ node, children, ...props }) => {
   return (
-    <div {...props} css={table} className={"table "}>
+    <div {...props} css={table} className={"table"}>
       {children}
     </div>
   );
@@ -230,7 +227,11 @@ const TableRow: TableRowComponent | ReactMarkdownNames = ({
   children,
   ...props
 }) => {
-  return <div {...props}>{children}</div>;
+  return (
+    <div {...props} className={"tr"} css={isHeader ? thead : tr}>
+      {children}
+    </div>
+  );
 };
 const TableCell: TableCellComponent | ReactMarkdownNames = ({
   node,
@@ -239,16 +240,21 @@ const TableCell: TableCellComponent | ReactMarkdownNames = ({
   ...props
 }) => {
   const theme = useTheme();
-  return (
+  return isHeader &&
+    (String(children) === "" || children === undefined || children === null) ? (
+    <React.Fragment />
+  ) : (
     <div
       {...props}
+      className={isHeader ? "th" : "td"}
       css={css({
-        flexBasis: "50%",
+        flexBasis: "10%",
         minHeight: "2rem",
+        backgroundColor: isHeader ? "rgba(48, 48, 48, 0.15)" : undefined,
         borderStyle: "solid",
         borderColor: theme.palette.divider,
         borderWidth: "0.5px",
-        textAlign: (String(node.properties?.align) as any) || "center",
+        textAlign: (node.properties?.align as any) || "center",
         overflowX: "auto",
         "&::-webkit-scrollbar": {
           width: "6px",
@@ -257,7 +263,7 @@ const TableCell: TableCellComponent | ReactMarkdownNames = ({
         },
         "&::-webkit-scrollbar-thumb": {
           borderRadius: "5px",
-          "-webkit-box-shadow": "inset 0 0 6px rgba(0, 0, 0, 0.1)",
+          WebkitBoxShadow: "inset 0 0 6px rgba(0, 0, 0, 0.1)",
           backgroundImage:
             "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
         },
@@ -282,6 +288,7 @@ interface StyledProps {
   style: CSSPropertyType;
   children?: React.ReactNode;
 }
+//eslint-disable-next-line
 const Styled: React.FC<StyledProps> = ({ root, style, children }) => {
   const Root = root;
 
@@ -296,6 +303,7 @@ type KaTeXProps = {
   display: boolean;
   style?: CSSPropertyType;
 };
+//eslint-disable-next-line
 const KaTeX: React.FC<KaTeXProps> = ({ display, style, children }) => {
   const ref: React.RefObject<HTMLDivElement> = useRef(null);
 
