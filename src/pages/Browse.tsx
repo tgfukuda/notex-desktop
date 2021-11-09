@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
-import React, { useEffect, useState, useRef, ChangeEvent } from "react";
-import { useHistory, useLocation } from "react-router";
+import React, { useEffect, useState, ChangeEvent } from "react";
+import { useHistory } from "react-router";
 import { css, useTheme, Theme } from "@emotion/react";
 import {
   Paper,
@@ -19,13 +19,13 @@ import {
   ExpandLessRounded,
   ChevronRightRounded,
 } from "@mui/icons-material";
+import { alpha } from "@mui/material/styles";
 import useModal from "../context/Modal";
 import { useSnackHandler } from "../context/SnackHandler";
 import useCommand, { Response } from "../api/command";
 import { useSettings } from "../redux/hooks";
 import { RequestDocs, ResponseDocs } from "../api/command";
 import { Meta } from "../redux/write";
-import { Language } from "../redux/settings";
 import browseMsg from "../utils/constant/browse";
 import utilMsg from "../utils/constant/util";
 
@@ -76,36 +76,36 @@ const row = (width: number, theme: Theme) => {
 
 const previewButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#86D6B2",
+      backgroundColor: theme.palette.success.main,
     },
     margin: theme.spacing(1),
   });
 
 const editButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#FFF7AA",
+      backgroundColor: theme.palette.warning.main,
     },
     margin: theme.spacing(1),
   });
 
 const deleteButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#D6431B",
+      backgroundColor: theme.palette.error.main,
     },
     margin: theme.spacing(1),
   });
 
 const cancelButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#E3E3E3",
+      backgroundColor: alpha(theme.palette.info.main, 0.05),
     },
     margin: theme.spacing(1),
   });
@@ -475,7 +475,6 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
   const handleChange =
     (meta: Meta) => (_: React.ChangeEvent<{}>, isExpanded: boolean) => {
       setExpanded(isExpanded ? "controll_of_" + meta.filename : "");
-      console.log("meta", meta);
       setModal(
         <DeleteModal meta={meta} handleDelete={handleDelete} exit={exit} />
       );
@@ -613,7 +612,8 @@ const Browse: React.FC = () => {
         setLoad(true);
       }
     })();
-  }, [load]);
+    // eslint-disable-next-line
+  }, [load, requestOption]);
 
   return (
     <Grid

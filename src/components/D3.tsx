@@ -2,7 +2,6 @@
 import React, { useRef, useEffect } from "react";
 import { css } from "@emotion/react";
 import * as d3 from "d3";
-import { CircularProgress } from "@mui/material";
 
 function calc(
   op: string,

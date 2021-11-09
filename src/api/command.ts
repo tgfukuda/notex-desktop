@@ -104,6 +104,13 @@ const useCommand = () => {
         throw err as ErrorResponse;
       }
     },
+    print: async (meta: Meta, body: string) => {
+      await invoke("print", {
+        meta,
+        body,
+      });
+      return;
+    },
   };
 };
 

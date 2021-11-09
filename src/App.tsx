@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import React, { useEffect } from "react";
+import React from "react";
 import "./App.css";
 import { ThemeProvider as EmotionProvider } from "@emotion/react";
 import { SnackContextProvider } from "./context/SnackHandler";
@@ -9,7 +9,7 @@ import { Provider as ReduxProvider } from "react-redux";
 import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
 import Top from "./pages/Top";
 
-const theme = createTheme({
+const themeBase = createTheme({
   palette: {
     primary: {
       main: "#6EB7DB",
@@ -32,6 +32,9 @@ const theme = createTheme({
     warning: {
       main: "#FDF7AA",
     },
+    info: {
+      main: "rgb(113, 145, 235)",
+    },
     divider: "rgba(0, 0, 0, 0.12)",
     common: {
       black: "rgba(0, 0, 0, 0.1)",
@@ -42,6 +45,18 @@ const theme = createTheme({
     fontSize: 14,
   },
 });
+
+const theme = createTheme(themeBase, {
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        text: {
+          color: themeBase.palette.text.primary
+        }
+      }
+    }
+  }
+})
 
 const ThemeProvider: React.FC<{ theme: typeof theme }> = ({
   theme,

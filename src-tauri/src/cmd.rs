@@ -1,13 +1,14 @@
 use super::model::Meta;
-use super::{Casher, Env, Memo, Setting};
+use super::{Casher, Env, HiddenWindow, Setting};
 use std::{
   collections::HashSet,
   fs::{self, File, OpenOptions},
   io::{BufRead, BufReader, Write},
+  path::{Path, PathBuf},
 };
 use tauri::State;
 
-#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "code")]
 enum Code {
   #[serde(rename = "200")]
@@ -20,14 +21,14 @@ enum Code {
   ProcessError,
 }
 
-#[derive(Debug, PartialEq, serde::Serialize)]
+#[derive(Debug, PartialEq, Clone, serde::Serialize)]
 pub struct Response {
   #[serde(flatten)]
   code: Code,
   message: String,
 }
 impl Response {
-  fn new<T: ToString + std::fmt::Debug>(message: T) -> Response {
+  pub fn new<T: ToString + std::fmt::Debug>(message: T) -> Response {
     println!("{:?}", message);
     Response {
       code: Code::Success,
@@ -35,7 +36,7 @@ impl Response {
     }
   }
 
-  fn client_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
+  pub fn client_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
     println!("{:?}", message);
     Response {
       code: Code::ClientError,
@@ -43,7 +44,7 @@ impl Response {
     }
   }
 
-  fn process_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
+  pub fn process_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
     println!("{:?}", message);
     Response {
       code: Code::ProcessError,
@@ -91,10 +92,7 @@ pub fn save_document(
   cashe: State<'_, Casher>,
 ) -> Result<Response, Response> {
   let setting = env.0.lock().map_err(Response::new)?.clone();
-  let Memo {
-    mut all_tags,
-    mut page,
-  } = cashe.0.lock().map_err(Response::process_error)?.clone();
+  let mut memo = cashe.0.lock().map_err(Response::process_error)?;
   let SaveDoc {
     overwrite,
     mut meta,
@@ -144,12 +142,13 @@ pub fn save_document(
         .map_err(Response::process_error)
     })
     .map(|_| {
-      all_tags = all_tags
+      memo.all_tags = memo
+        .all_tags
         .union(&meta.get_into_tag().into_iter().collect())
         .map(|s| s.clone())
         .collect();
-      page += 1;
-      println!("page: {}, all_tags: {:?}", page, all_tags);
+      memo.page += 1;
+      println!("page: {}, all_tags: {:?}", memo.page, memo.all_tags);
       Response::new("File successfully saved")
     })
 }
@@ -164,10 +163,7 @@ pub fn delete_file(
   cashe: State<Casher>,
 ) -> Result<Response, Response> {
   let setting = env.0.lock().map_err(Response::process_error)?;
-  let Memo {
-    mut all_tags,
-    mut page,
-  } = cashe.0.lock().map_err(Response::process_error)?.clone();
+  let mut memo = cashe.0.lock().map_err(Response::process_error)?;
   let target_name = target.get_hashed_filename();
   let path = setting.path_to_file(&target_name);
   let mut new_index = vec![];
@@ -181,8 +177,6 @@ pub fn delete_file(
       new_index.push(line);
     }
   }
-
-  println!("{:?}", new_index);
 
   fs::remove_file(path)
     .map_err(Response::process_error)
@@ -199,14 +193,15 @@ pub fn delete_file(
         .map_err(Response::process_error)
     })
     .map(|_| {
-      all_tags = all_tags
+      memo.all_tags = memo
+        .all_tags
         .difference(&target.get_into_tag().into_iter().collect())
         .map(|s| s.clone())
         .collect();
-      if 0 < page {
-        page -= 1;
+      if 0 < memo.page {
+        memo.page -= 1;
       }
-      println!("page: {}, all_tags: {:?}", page, all_tags);
+      println!("page: {}, all_tags: {:?}", memo.page, memo.all_tags);
       Response::new("File successfully deleted")
     })
 }
@@ -233,10 +228,7 @@ pub fn get_documents_by_filter(
   req: RequestDocs,
   cashe: State<Casher>,
 ) -> Result<ResponseDocs, Response> {
-  let Memo {
-    mut all_tags,
-    mut page,
-  } = cashe.0.lock().map_err(Response::process_error)?.clone();
+  let mut memo = cashe.0.lock().map_err(Response::process_error)?;
   let mut list = vec![];
   let RequestDocs {
     mut offset,
@@ -251,12 +243,12 @@ pub fn get_documents_by_filter(
   let mut lines =
     BufReader::new(File::open(crate::index_path()).map_err(Response::process_error)?).lines();
 
-  if page == 0 {
+  if memo.page == 0 {
     while let Some(line) = lines.next() {
       if 0 < offset {
         offset -= 1;
       }
-      page += 1;
+      memo.page += 1;
       let meta = serde_json::from_str::<Meta>(&line.map_err(Response::process_error)?)
         .map_err(Response::process_error)?;
       if offset == 0
@@ -273,16 +265,17 @@ pub fn get_documents_by_filter(
       {
         list.push(meta.clone())
       }
-      all_tags = all_tags
+      memo.all_tags = memo
+        .all_tags
         .union(&meta.get_into_tag().into_iter().collect::<HashSet<String>>())
         .map(|s| s.clone())
         .collect();
     }
-    println!("page: {}, all_tags: {:?}", page, all_tags);
+    println!("page: {}, all_tags: {:?}", memo.page, memo.all_tags);
     Ok(ResponseDocs {
       list,
-      page,
-      all_tags,
+      page: memo.page,
+      all_tags: memo.all_tags.clone(),
     })
   } else {
     while let Some(line) = lines.next() {
@@ -292,8 +285,7 @@ pub fn get_documents_by_filter(
 
       let meta = serde_json::from_str::<Meta>(&line.map_err(Response::process_error)?)
         .map_err(Response::process_error)?;
-      if list.len() < limit //must be unnecessary
-        && meta.filter_by_filename(&filename_start, &filename_contain)
+      if meta.filter_by_filename(&filename_start, &filename_contain)
         && meta
           .filter_by_created(&created_at.0, &created_at.1)
           .map_err(Response::client_error)?
@@ -302,6 +294,8 @@ pub fn get_documents_by_filter(
           .map_err(Response::client_error)?
         && meta.filter_by_tags(&tags)
         && meta.filter_by_author(&author)
+        && list.len() < limit
+      //must be unnecessary
       {
         if 0 < offset {
           offset -= 1;
@@ -310,11 +304,11 @@ pub fn get_documents_by_filter(
         }
       }
     }
-    println!("page: {}, all_tags: {:?}", page, all_tags);
+    println!("page: {}, all_tags: {:?}", memo.page, memo.all_tags);
     Ok(ResponseDocs {
       list,
-      page,
-      all_tags,
+      page: memo.page,
+      all_tags: memo.all_tags.clone(),
     })
   }
 }
@@ -324,4 +318,37 @@ pub fn get_document(meta: Meta, env: State<Env>) -> Result<String, Response> {
   let setting = env.0.lock().map_err(Response::process_error)?;
   let path = setting.path_to_file(&meta.get_hashed_filename());
   fs::read_to_string(path).map_err(Response::process_error)
+}
+
+#[tauri::command]
+pub fn ls_dir(search: &Path) -> Result<Vec<PathBuf>, Response> {
+  let mut res = vec![];
+  if !search.exists() || !search.is_dir() {
+    Ok(res)
+  } else {
+    let list = fs::read_dir(search).map_err(Response::process_error)?;
+    for path in list {
+      let path = path.map_err(Response::process_error)?.path();
+      if path.is_dir() {
+        res.push(path)
+      }
+    }
+
+    Ok(res)
+  }
+}
+
+#[derive(Debug, PartialEq, serde::Serialize)]
+struct PayloadPDF<'a> {
+  meta: Meta,
+  body: &'a str,
+}
+#[tauri::command]
+pub fn print(meta: Meta, body: &str, hidden: State<'_, HiddenWindow>) -> Result<(), Response> {
+  let hidden = hidden.0.lock().map_err(Response::process_error)?;
+  println!("{:?}, {}", meta, body);
+  hidden
+    .emit("print", PayloadPDF { meta, body })
+    .map_err(Response::process_error)?;
+  Ok(())
 }

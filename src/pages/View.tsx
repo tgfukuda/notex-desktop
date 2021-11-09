@@ -14,7 +14,7 @@ const root = (theme: Theme) => css`
 `;
 
 const View: React.FC = () => {
-  const location = useLocation();
+  const location = useLocation<Meta>();
   const theme = useTheme();
   const container = useRef(null);
   const [load, setLoad] = useState<{
@@ -24,12 +24,13 @@ const View: React.FC = () => {
     status: undefined,
     res: "",
   });
-  const { getDocument } = useCommand();
+  const { getDocument, print } = useCommand();
+  const meta = location.state;
 
   useEffect(() => {
     if (load.status === undefined)
       (async () => {
-        const res = await getDocument(location.state as Meta).catch((err) => {
+        const res = await getDocument(meta).catch((err) => {
           setLoad({
             status: false,
             res: (err as Response).message,
@@ -44,12 +45,25 @@ const View: React.FC = () => {
           });
         }
       })();
+    //eslint-disable-next-line
   }, [load.status === undefined]);
 
   return load.status === undefined ? (
-    <CircularProgress css={root} />
+    <CircularProgress css={root(theme)} />
   ) : load.status ? (
-    <div css={root} ref={container}>
+    <div css={root(theme)} ref={container}>
+      <Button
+        css={css`
+          width: 100%;
+        `}
+        onClick={() =>
+          print(meta, load.res)
+            .then(() => {})
+            .catch(() => {})
+        }
+      >
+        pdf
+      </Button>
       <Markdown md={load.res} container={container} />
     </div>
   ) : (

@@ -15,16 +15,9 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import utilMsg from "../utils/constant/util";
 import { useSettings } from "../redux/hooks";
+import { appWindow } from "@tauri-apps/api/window";
 
-type Props = {
-  children: React.ReactElement;
-};
-
-type DummyProps = {
-  width: number;
-};
-
-const HideOnScroll: React.FC<Props> = ({ children }) => {
+const HideOnScroll: React.FC<{children: React.ReactElement}> = ({ children }) => {
   const trigger = useScrollTrigger();
 
   return (
@@ -33,11 +26,13 @@ const HideOnScroll: React.FC<Props> = ({ children }) => {
     </Slide>
   );
 };
-
 HideOnScroll.propTypes = {
   children: PropTypes.element.isRequired,
 };
 
+type DummyProps = {
+  width: number;
+};
 export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
   const theme = useTheme();
   return (
@@ -56,13 +51,34 @@ export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
   );
 };
 
-const Header = () => {
+const titlebar = css`
+  height: 30px;
+  background: #329ea3;
+  user-select: none;
+  display: flex;
+  justify-content: flex-end;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+`;
+const titlebarbutton = css`
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  &:hover {
+    background: #5bbec3;
+  }
+`;
+const Header: React.FC<{ online?: boolean }> = ({ online = false }) => {
   const theme = useTheme();
   const utilMsgs = utilMsg(useSettings().language);
   const path = useLocation().pathname;
   const isRoot = path === "/" || path.startsWith("/home");
 
-  return (
+  return online ? (
     <header
       css={css({
         width: "100vw",
@@ -103,9 +119,6 @@ const Header = () => {
             <Button component={Link} to={"/browse"} color={"inherit"}>
               {utilMsgs.browse}
             </Button>
-            <Button component={Link} to={"/test"} color={"inherit"}>
-              test
-            </Button>
             <Button component={Link} to={"/settings"} color={"inherit"}>
               <SettingsIcon />
             </Button>
@@ -113,6 +126,8 @@ const Header = () => {
         </AppBar>
       </HideOnScroll>
     </header>
+  ) : (
+    <React.Fragment />
   );
 };
 

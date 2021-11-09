@@ -1,4 +1,4 @@
-pub mod command;
+pub mod cmd;
 pub mod constants;
 pub mod model;
 
@@ -7,8 +7,9 @@ use std::{
   fs::{DirBuilder, File, OpenOptions},
   io::{ErrorKind, Read, Write},
   path::{Path, PathBuf},
-  sync::Mutex,
+  sync::{Arc, Mutex},
 };
+use tauri::Window;
 
 #[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "language")]
@@ -90,6 +91,19 @@ impl Casher {
   }
 }
 
+pub struct MainWindow(Arc<Mutex<Window>>);
+impl MainWindow {
+  pub fn new(window: Window) -> MainWindow {
+    MainWindow(Arc::new(Mutex::new(window)))
+  }
+}
+pub struct HiddenWindow(Arc<Mutex<Window>>);
+impl HiddenWindow {
+  pub fn new(window: Window) -> HiddenWindow {
+    HiddenWindow(Arc::new(Mutex::new(window)))
+  }
+}
+
 fn root_path() -> PathBuf {
   dirs::home_dir()
     .unwrap_or(Path::new(".").to_path_buf())
@@ -166,9 +180,7 @@ pub fn initialize() -> Env {
   println!("hostname: {}", whoami::hostname());
   println!(
     "language: {}",
-    whoami::lang()
-      .next()
-      .unwrap_or(Language::English.to_string())
+    whoami::lang().collect::<String>()
   );
   println!("realname: {}", whoami::realname());
   println!("platform: {}", whoami::platform());

@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 export type Meta = {
   filename: string;
@@ -10,6 +10,7 @@ export type Meta = {
 };
 
 /**
+ * DELETE --
  * unused cuz markdown computation is applied to react-markdown (ast, madast, remark, rehype plugin)
  */
 const initialState = {

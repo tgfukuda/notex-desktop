@@ -30,6 +30,7 @@ import Markdown from "../components/Markdown";
 import { Z_INDEXES } from "../utils/constant/util";
 
 const contentsHeight = 80;
+const hoverAlpha = 0.5;
 
 const scrollable = css({
   height: contentsHeight + "vh",
@@ -77,7 +78,7 @@ const PostButton: React.FC<PostButtonProps> = ({ handleSave }) => {
       css={css({
         backgroundColor: theme.palette.success.main,
         "&:hover": {
-          backgroundColor: alpha(theme.palette.success.main, 0.5),
+          backgroundColor: alpha(theme.palette.success.main, hoverAlpha),
         },
       })}
     >
@@ -88,12 +89,14 @@ const PostButton: React.FC<PostButtonProps> = ({ handleSave }) => {
 
 type ControlerProps = {
   meta: Meta;
+  overwrite: boolean;
   setMeta: React.Dispatch<React.SetStateAction<Meta>>;
   handleImageUrl: (url: string) => void;
   handleSave: () => void;
 };
 const Controler: React.FC<ControlerProps> = ({
   meta,
+  overwrite,
   setMeta,
   handleImageUrl,
   handleSave,
@@ -156,7 +159,10 @@ const Controler: React.FC<ControlerProps> = ({
           onClick={() => setOpen(!open)}
           css={css`
             max-width: 5%;
-            background-color: rgba(71, 120, 211, 0.568);
+            background-color: ${theme.palette.info.main};
+            &:hover {
+              background-color: ${alpha(theme.palette.info.main, hoverAlpha)};
+            }
           `}
         >
           <MoreVertIcon />
@@ -165,7 +171,10 @@ const Controler: React.FC<ControlerProps> = ({
           onClick={() => inputRef.current?.click()}
           css={css`
             max-width: 5%;
-            background-color: rgba(71, 120, 211, 0.568);
+            background-color: ${theme.palette.info.main};
+            &:hover {
+              background-color: ${alpha(theme.palette.info.main, hoverAlpha)};
+            }
           `}
         >
           <ImageIcon />
@@ -200,12 +209,14 @@ const Controler: React.FC<ControlerProps> = ({
             height: 100%;
             width: 100%;
             z-index: ${Z_INDEXES.overlay.main};
+            list-style: none;
           `}
         >
           <li>
             <TextField
               label={"filename"}
               defaultValue={meta.filename}
+              disabled={overwrite}
               onClick={handleStop}
               onBlur={(e) =>
                 setMeta({
@@ -220,6 +231,7 @@ const Controler: React.FC<ControlerProps> = ({
             <TextField
               label={"author"}
               defaultValue={meta.author}
+              disabled={overwrite}
               onClick={handleStop}
               onBlur={(e) =>
                 setMeta({
@@ -249,9 +261,6 @@ const Controler: React.FC<ControlerProps> = ({
                     width: "6px",
                     height: "6px",
                   },
-                  "& li::marker": {
-                    display: "none"
-                  }
                 }),
                 field,
               ]}
@@ -390,7 +399,7 @@ const Preview: React.FC<{
       }, 1500);
     }
     setLoad(ShouldUpdate.WAIT);
-  }, [data.load]);
+  }, [data.load, setLoad]);
 
   return (
     <Grid
@@ -410,6 +419,7 @@ const Preview: React.FC<{
         () => (
           <Markdown container={container} md={data.raw} />
         ),
+        //eslint-disable-next-line
         [data.load !== ShouldUpdate.DONE]
       )}
     </Grid>
@@ -422,7 +432,7 @@ type Data = {
 };
 const Edit: React.FC = () => {
   const theme = useTheme();
-  const location = useLocation();
+  const location = useLocation<Meta>();
   const [raw, setRaw] = useState("");
   const [load, setLoad] = useState<ShouldUpdate>(ShouldUpdate.DONE);
   const overwrite = useRef(false);
@@ -445,7 +455,6 @@ const Edit: React.FC = () => {
   const { handleSuc, handleErr } = useSnackHandler();
   const { saveDocument, getDocument } = useCommand();
   const handleSave = async () => {
-    console.log(overwrite.current);
     if (meta?.filename) {
       const res = await saveDocument(meta, raw, overwrite.current).catch(
         (err) => {
@@ -480,16 +489,15 @@ const Edit: React.FC = () => {
 
     if (location.search) {
       (async () => {
-        const body = await getDocument(location.state as Meta).catch((err) => {
+        const body = await getDocument(location.state).catch((err) => {
           handleErr((err as Response).message);
           return undefined;
         });
 
         if (body) {
           setRaw(body);
-          setMeta(location.state as Meta);
+          setMeta(location.state);
           overwrite.current = true;
-          console.log(overwrite.current);
           setLoad(ShouldUpdate.USERIN);
         }
       })();
@@ -500,6 +508,7 @@ const Edit: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
     };
+    //eslint-disable-next-line
   }, []);
 
   return (
@@ -517,6 +526,7 @@ const Edit: React.FC = () => {
     >
       <Controler
         meta={meta}
+        overwrite={overwrite.current}
         setMeta={setMeta}
         handleImageUrl={handleImageUrl}
         handleSave={handleSave}

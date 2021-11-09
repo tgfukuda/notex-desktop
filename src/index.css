@@ -48,8 +48,9 @@ code {
 
 .modal {
   position: fixed;
-  left: "10%"; top: "20%";
-  width: "80%"; height: "60%";
+  left: 10%; top: 20%;
+  width: 80%; height: 60%;
+  padding: 0 auto;
   background-color: papayawhip;
   z-index: 2147483646;
 }

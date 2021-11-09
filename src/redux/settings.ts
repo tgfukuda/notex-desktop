@@ -6,23 +6,21 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
  */
 
 type KeyBindings = {
-  [key: string]: any;
+  [command: string]: string;
 };
 
 export const languages = ["japanese", "english"] as const;
 export type Language = typeof languages[number];
 
 export type SettingType = {
-  target_dir: string,
-  username: string,
-  password: string,
-  is_pass_enabled: boolean,
-  language: Language,
-  autosave: number | null,
-  key_bindings: {
-    [command: string]: string
-  },
-  is_new: boolean,
+  target_dir: string;
+  username: string;
+  password: string;
+  is_pass_enabled: boolean;
+  language: Language;
+  autosave: number | null;
+  key_bindings: KeyBindings;
+  is_new: boolean;
 };
 
 const initialState: SettingType = {
@@ -52,15 +50,21 @@ const settingsSlice = createSlice({
     setLanguage(state, action: PayloadAction<Language>) {
       state.language = action.payload;
     },
-    updateKeyBindings(state, action: PayloadAction<{
-      key: number;
-      value: string;
-    }>) {
+    updateKeyBindings(
+      state,
+      action: PayloadAction<{
+        key: number;
+        value: string;
+      }>
+    ) {
       state.key_bindings[action.payload.key] = action.payload.value;
     },
-    deleteKeyBindings(state, action: PayloadAction<{
-      key: number
-    }>) {
+    deleteKeyBindings(
+      state,
+      action: PayloadAction<{
+        key: number;
+      }>
+    ) {
       state.key_bindings[action.payload.key] = "";
     },
     setSettings(state, action: PayloadAction<SettingType>) {

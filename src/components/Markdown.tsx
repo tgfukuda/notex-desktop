@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { css, useTheme } from "@emotion/react";
+import { css, useTheme, Theme } from "@emotion/react";
 import { Typography } from "@mui/material";
 import { Variant } from "@mui/material/styles/createTypography";
 import { FunctionD3, parseFormula, reduction, Coordinate } from "./D3";
@@ -88,6 +88,7 @@ const Section: React.FC<SectionProps> = ({ level, children }) => {
     return () => {
       removeEl(idx);
     };
+    //eslint-disable-next-line
   }, []);
 
   return (
@@ -179,34 +180,60 @@ const Graph: CodeComponent = ({ node, children, ...props }) => {
         )
       );
     })();
-  }, [func, min, max, division]);
+  }, [parseResult, min, max, division]);
 
   return <FunctionD3 data={load} />;
 };
 
-const table = css`
-  width: 99.5%;
-  display: flex;
-  flex-direction: column;
-  overflow-x: auto;
-`;
-
-const thead = css`
-  margin: 0;
-  padding: 0;
-  display: flex;
-  width: 100%;
-`;
-
-const tr = css`
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-basis: 100%;
-  &:hover {
-    background-color: rgba(200, 200, 200, 0.25);
-  }
-`;
+const tableClasses = {
+  table: css`
+    width: 99.5%;
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+  `,
+  thead: css`
+    margin: 0;
+    padding: 0;
+    display: flex;
+    width: 100%;
+  `,
+  tr: css`
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-basis: 100%;
+  `,
+  cell: (theme: Theme, isHeader: boolean, align: any) => css`
+    flex-basis: 20%;
+    min-height: 2rem;
+    background-color: ${isHeader ? "rgba(200, 200, 200, 0.25)" : "inherit"};
+    border-style: solid;
+    border-color: ${theme.palette.divider};
+    border-width: 0.5px;
+    text-align: ${align || "center"};
+    overflow-x: auto;
+    &:hover {
+      background-color: rgba(200, 200, 200, 0.05);
+    }
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+      background-color: #f5f5f5;
+    }
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+      backgroundimage: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        from(#30cfd0),
+        to(#330867)
+      );
+    }
+  `,
+};
 
 const TableContainer:
   | ComponentType<
@@ -216,7 +243,7 @@ const TableContainer:
     >
   | ReactMarkdownNames = ({ node, children, ...props }) => {
   return (
-    <div {...props} css={table} className={"table"}>
+    <div {...props} css={tableClasses.table} className={"table"}>
       {children}
     </div>
   );
@@ -228,7 +255,11 @@ const TableRow: TableRowComponent | ReactMarkdownNames = ({
   ...props
 }) => {
   return (
-    <div {...props} className={"tr"} css={isHeader ? thead : tr}>
+    <div
+      {...props}
+      className={"tr"}
+      css={isHeader ? tableClasses.thead : tableClasses.tr}
+    >
       {children}
     </div>
   );
@@ -240,34 +271,11 @@ const TableCell: TableCellComponent | ReactMarkdownNames = ({
   ...props
 }) => {
   const theme = useTheme();
-  return isHeader &&
-    (String(children) === "" || children === undefined || children === null) ? (
-    <React.Fragment />
-  ) : (
+  return (
     <div
       {...props}
       className={isHeader ? "th" : "td"}
-      css={css({
-        flexBasis: "10%",
-        minHeight: "2rem",
-        backgroundColor: isHeader ? "rgba(48, 48, 48, 0.15)" : undefined,
-        borderStyle: "solid",
-        borderColor: theme.palette.divider,
-        borderWidth: "0.5px",
-        textAlign: (node.properties?.align as any) || "center",
-        overflowX: "auto",
-        "&::-webkit-scrollbar": {
-          width: "6px",
-          height: "6px",
-          backgroundColor: "#F5F5F5",
-        },
-        "&::-webkit-scrollbar-thumb": {
-          borderRadius: "5px",
-          WebkitBoxShadow: "inset 0 0 6px rgba(0, 0, 0, 0.1)",
-          backgroundImage:
-            "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
-        },
-      })}
+      css={tableClasses.cell(theme, isHeader, node.properties?.align)}
     >
       {children}
     </div>
@@ -286,7 +294,6 @@ type CSSPropertyType = {
 interface StyledProps {
   root: keyof JSX.IntrinsicElements;
   style: CSSPropertyType;
-  children?: React.ReactNode;
 }
 //eslint-disable-next-line
 const Styled: React.FC<StyledProps> = ({ root, style, children }) => {
@@ -368,7 +375,6 @@ const Markdown: React.FC<MarkdownProps> = ({ md, container }) => {
         td: TableCell,
         a: ({ node, href, children, ...props }) => {
           if (href && href[0] === "#") {
-            console.log("href", href);
             return (
               <a
                 {...props}

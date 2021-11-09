@@ -1,12 +1,11 @@
 /** @jsxImportSource @emotion/react */
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { css } from "@emotion/react";
 import {
   BrowserRouter as Router,
   Route,
   Switch,
   Redirect,
-  useParams,
 } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
 import { NoTeXSettings } from "../redux/settings";
@@ -16,12 +15,38 @@ import Browse from "./Browse";
 import View from "./View";
 import Home from "./Home";
 import Edit from "./Write";
+import Listner from "./Listener";
 import Settings from "./Setting";
-import Tauritest from "./Tauritest";
 import useCommand, { Response } from "../api/command";
+import { useSnackHandler } from "../context/SnackHandler";
+import { listen, Event as TauriEvent, UnlistenFn } from "@tauri-apps/api/event";
 
 const Main: React.FC = () => {
-  const { route } = useParams<Record<string, string | undefined>>();
+  const unlisten = useRef<UnlistenFn[]>([]);
+  const { handleSuc, handleErr } = useSnackHandler();
+
+  useEffect(() => {
+    listen("success", (e: TauriEvent<Response>) => {
+      handleSuc(e.payload.message);
+    })
+      .then((ulf) => {
+        unlisten.current.push(ulf);
+      })
+      .catch((err) => handleErr(err));
+
+    listen("fail", (e: TauriEvent<Response>) => {
+      handleSuc(e.payload.message);
+    })
+      .then((ulf) => {
+        unlisten.current.push(ulf);
+      })
+      .catch(() => {});
+
+    return () => {
+      for (const ulf of unlisten.current) ulf();
+    };
+    // eslint-disable-next-line
+  }, []);
 
   return (
     <main
@@ -29,26 +54,25 @@ const Main: React.FC = () => {
         minHeight: "70vh",
       })}
     >
-      {(() => {
-        switch (route) {
-          case "home":
-            return <Home />;
-          case "write":
-            return <Edit />;
-          // case "edit":
-          //   return <EditFile />;
-          case "browse":
-            return <Browse />;
-          case "view":
-            return <View />;
-          case "settings":
-            return <Settings />;
-          case "test":
-            return <Tauritest />;
-          default:
-            return <>404 Not Found</>;
-        }
-      })()}
+      <Switch>
+        <Route exact path={"/home"}>
+          <Home />
+        </Route>
+        <Route exact path={"/write"}>
+          <Edit />
+        </Route>
+        <Route exact path={"/browse"}>
+          <Browse />
+        </Route>
+        <Route exact path={"/view"}>
+          <View />
+        </Route>
+        <Route exact path={"/settings"}>
+          <Settings />
+        </Route>
+        <Redirect exact from={"/"} to={"/home"} />
+        <Route>404 Not Found</Route>
+      </Switch>
     </main>
   );
 };
@@ -72,18 +96,20 @@ const Top: React.FC = () => {
         dispatch(NoTeXSettings.setSettings(setting));
       }
     })();
+    // eslint-disable-next-line
   }, []);
 
   return (
     <Router>
       <Switch>
-        <Redirect exact from={"/"} to={"/home"} />
-        <Route path={"/:route"}>
+        <Route exact path={"/listen"}>
+          <Listner />
+        </Route>
+        <Route path={"/"}>
           <Header />
           <Main />
           <Footer />
         </Route>
-        <Route>404 Not Found</Route>
       </Switch>
     </Router>
   );
