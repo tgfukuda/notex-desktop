@@ -79,14 +79,14 @@ pub struct Env(Mutex<Setting>);
 #[derive(Debug, PartialEq, Clone)]
 pub struct Memo {
   pub all_tags: HashSet<String>,
-  pub page: usize
+  pub page: usize,
 }
 pub struct Casher(Mutex<Memo>);
 impl Casher {
   pub fn new() -> Casher {
     Casher(Mutex::new(Memo {
       all_tags: HashSet::new(),
-      page: 0usize
+      page: 0usize,
     }))
   }
 }
@@ -127,21 +127,17 @@ pub fn initialize() -> Env {
 
   if !root.exists() {
     is_new = true;
-    DirBuilder::new()
-      .create(root.clone())
-      .unwrap();
+    DirBuilder::new().create(root.clone()).unwrap();
     DirBuilder::new().create(default_target.clone()).unwrap();
-    
     File::create(conf.clone())
-        .and_then(|mut f| {
-          f.write_all(
-            serde_json::to_string(&Setting::default())
-              .unwrap()
-              .as_bytes(),
-          )
-        })
-        .unwrap();
-  
+      .and_then(|mut f| {
+        f.write_all(
+          serde_json::to_string(&Setting::default())
+            .unwrap()
+            .as_bytes(),
+        )
+      })
+      .unwrap();
     File::create(index.clone()).unwrap();
   }
 
@@ -175,14 +171,7 @@ pub fn initialize() -> Env {
     }
   }
 
-  println!("devicename: {}", whoami::devicename());
   println!("distrobution: {}", whoami::distro());
-  println!("hostname: {}", whoami::hostname());
-  println!(
-    "language: {}",
-    whoami::lang().collect::<String>()
-  );
-  println!("realname: {}", whoami::realname());
   println!("platform: {}", whoami::platform());
   println!("hello {}!", whoami::username());
   let mut buf = String::new();

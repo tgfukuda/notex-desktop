@@ -21,6 +21,12 @@ impl Meta {
     format!("{:x}{}", hasher.finalize(), TARGET_EXTENTION)
   }
 
+  pub fn get_hashed_html_name(&self) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(self.filename.as_bytes());
+    format!("{:x}{}", hasher.finalize(), ".html")
+  }
+
   pub fn get_into_tag(self) -> Vec<String> {
     self.tags
   }

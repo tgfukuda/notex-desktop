@@ -18,6 +18,7 @@ import useCommand, { Response } from "../api/command";
 import { useSnackHandler } from "../context/SnackHandler";
 import utilMsg from "../utils/constant/util";
 import settingMsg from "../utils/constant/setting";
+import { dialog } from "@tauri-apps/api";
 
 const label = (theme: Theme) =>
   css({
@@ -59,7 +60,7 @@ const Settings: React.FC = () => {
   return (
     <section
       css={css({
-        width: "95vw",
+        width: "100%",
         height: "80vh",
         margin: theme.spacing(1),
         padding: theme.spacing(2),
@@ -74,7 +75,7 @@ const Settings: React.FC = () => {
         variant={"h2"}
         css={css({
           flex: "0 0 100%",
-          margin: theme.spacing(2),
+          margin: theme.spacing(2, 2, 2, 0),
           padding: theme.spacing(0.2),
           borderBottom: "4px double",
         })}
@@ -82,7 +83,27 @@ const Settings: React.FC = () => {
         {msgs.setting}
       </Typography>
       <span css={label}>{msgs.targetDir}</span>
-      <TextField label={msgs.targetDir} value={temp.target_dir} css={labeled} />
+      <TextField
+        label={msgs.targetDir}
+        value={temp.target_dir}
+        onFocus={async (e) => {
+          const res = await dialog
+            .open({
+              defaultPath: temp.target_dir,
+              directory: true,
+              multiple: false,
+            })
+            .catch((_) => null);
+          if (typeof res === "string") {
+            setTemp({
+              ...temp,
+              target_dir: res,
+            });
+          }
+          e.target.blur();
+        }}
+        css={labeled}
+      />
       <span css={label}>{msgs.userName}</span>
       <TextField
         label={msgs.userName}

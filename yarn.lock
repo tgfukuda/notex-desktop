@@ -4252,6 +4252,11 @@
   "resolved" "https://registry.npmjs.org/char-regex/-/char-regex-1.0.2.tgz"
   "version" "1.0.2"
 
+"character-entities-html4@^2.0.0":
+  "integrity" "sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA=="
+  "resolved" "https://registry.npmjs.org/character-entities-html4/-/character-entities-html4-2.1.0.tgz"
+  "version" "2.1.0"
+
 "character-entities-legacy@^1.0.0":
   "integrity" "sha512-3Xnr+7ZFS1uxeiUDvV02wQ+QDbc55o97tIV5zHScSPJpcLm/r0DFPcoY3tYRp+VZukxuMeKgXYmsXQHO05zQeA=="
   "resolved" "https://registry.npmjs.org/character-entities-legacy/-/character-entities-legacy-1.1.4.tgz"
@@ -7497,7 +7502,7 @@
   "resolved" "https://registry.npmjs.org/github-from-package/-/github-from-package-0.0.0.tgz"
   "version" "0.0.0"
 
-"github-slugger@^1.0.0":
+"github-slugger@^1.0.0", "github-slugger@^1.1.1":
   "integrity" "sha512-w0dzqw/nt51xMVmlaV1+JRzN+oCa1KfcgGEWhxUG16wbdA+Xnt/yoFO8Z8x/V82ZcZ0wy6ln9QDup5avbhiDhQ=="
   "resolved" "https://registry.npmjs.org/github-slugger/-/github-slugger-1.4.0.tgz"
   "version" "1.4.0"
@@ -7868,6 +7873,18 @@
     "vfile-location" "^4.0.0"
     "web-namespaces" "^2.0.0"
 
+"hast-util-has-property@^2.0.0":
+  "integrity" "sha512-4Qf++8o5v14us4Muv3HRj+Er6wTNGA/N9uCaZMty4JWvyFKLdhULrv4KE1b65AthsSO9TXSZnjuxS8ecIyhb0w=="
+  "resolved" "https://registry.npmjs.org/hast-util-has-property/-/hast-util-has-property-2.0.0.tgz"
+  "version" "2.0.0"
+
+"hast-util-heading-rank@^2.0.0":
+  "integrity" "sha512-w+Rw20Q/iWp2Bcnr6uTrYU6/ftZLbHKhvc8nM26VIWpDqDMlku2iXUVTeOlsdoih/UKQhY7PHQ+vZ0Aqq8bxtQ=="
+  "resolved" "https://registry.npmjs.org/hast-util-heading-rank/-/hast-util-heading-rank-2.1.0.tgz"
+  "version" "2.1.0"
+  dependencies:
+    "@types/hast" "^2.0.0"
+
 "hast-util-is-element@^2.0.0":
   "integrity" "sha512-ag0fiZfRWsPiR1udvnSbaazJLGv8qd8E+/e3rW8rUZhbKG4HNJmFL4QkEceN+22BgE+uozXY30z/s+2dL6Z++g=="
   "resolved" "https://registry.npmjs.org/hast-util-is-element/-/hast-util-is-element-2.1.1.tgz"
@@ -7885,6 +7902,13 @@
   "integrity" "sha512-AyjlI2pTAZEOeu7GeBPZhROx0RHBnydkQIXlhnFzDi0qfXTmGUWoCYZtomHbrdrheV4VFUlPcfJ6LMF5T6sQzg=="
   "resolved" "https://registry.npmjs.org/hast-util-parse-selector/-/hast-util-parse-selector-3.1.0.tgz"
   "version" "3.1.0"
+  dependencies:
+    "@types/hast" "^2.0.0"
+
+"hast-util-to-string@^2.0.0":
+  "integrity" "sha512-02AQ3vLhuH3FisaMM+i/9sm4OXGSq1UhOOCpTLLQtHdL3tZt7qil69r8M8iDkZYyC0HCFylcYoP+8IO7ddta1A=="
+  "resolved" "https://registry.npmjs.org/hast-util-to-string/-/hast-util-to-string-2.0.0.tgz"
+  "version" "2.0.0"
   dependencies:
     "@types/hast" "^2.0.0"
 
@@ -10072,6 +10096,17 @@
     "@types/unist" "^2.0.0"
     "unist-util-visit" "^3.0.0"
 
+"mdast-util-directive@^2.0.0":
+  "integrity" "sha512-FzQQdO1SZGMflk3SoXITE64yPy+RAfsZgtfAuOVlc4G6H8g0XLkeKZ044z2q9tdY/rD1JfRrI+bmKry9wKhnjA=="
+  "resolved" "https://registry.npmjs.org/mdast-util-directive/-/mdast-util-directive-2.1.1.tgz"
+  "version" "2.1.1"
+  dependencies:
+    "@types/mdast" "^3.0.0"
+    "mdast-util-to-markdown" "^1.0.0"
+    "parse-entities" "^3.0.0"
+    "stringify-entities" "^4.0.0"
+    "unist-util-visit-parents" "^5.0.0"
+
 "mdast-util-find-and-replace@^2.0.0":
   "integrity" "sha512-1w1jbqAd13oU78QPBf5223+xB+37ecNtQ1JElq2feWols5oEYAl+SgNDnOZipe7NfLemoEt362yUS15/wip4mw=="
   "resolved" "https://registry.npmjs.org/mdast-util-find-and-replace/-/mdast-util-find-and-replace-2.1.0.tgz"
@@ -10321,6 +10356,19 @@
     "micromark-util-subtokenize" "^1.0.0"
     "micromark-util-symbol" "^1.0.0"
     "micromark-util-types" "^1.0.1"
+    "parse-entities" "^3.0.0"
+    "uvu" "^0.5.0"
+
+"micromark-extension-directive@^2.0.0":
+  "integrity" "sha512-kypTk6AOKTqYs7ObYFumojYcZlq07iiybq7CiFTIys4jQEieJnnzeAQ+KsdpoJ5pX2oxYWLA/ghBmPsIaahCfA=="
+  "resolved" "https://registry.npmjs.org/micromark-extension-directive/-/micromark-extension-directive-2.0.3.tgz"
+  "version" "2.0.3"
+  dependencies:
+    "micromark-factory-space" "^1.0.0"
+    "micromark-factory-whitespace" "^1.0.0"
+    "micromark-util-character" "^1.0.0"
+    "micromark-util-symbol" "^1.0.0"
+    "micromark-util-types" "^1.0.0"
     "parse-entities" "^3.0.0"
     "uvu" "^0.5.0"
 
@@ -13447,10 +13495,33 @@
     "parse5" "^6.0.0"
     "unified" "^10.0.0"
 
+"rehype-slug@^5.0.0":
+  "integrity" "sha512-jnYsFKxRh+/tQa1L+SU/ykAPGOSVCqd0BwaOBPUANcvCu8d0/SZB4IalJkdJ+n6d1eAAS2YkvjUPi+2EGYtfCQ=="
+  "resolved" "https://registry.npmjs.org/rehype-slug/-/rehype-slug-5.0.0.tgz"
+  "version" "5.0.0"
+  dependencies:
+    "@types/hast" "^2.0.0"
+    "github-slugger" "^1.1.1"
+    "hast-util-has-property" "^2.0.0"
+    "hast-util-heading-rank" "^2.0.0"
+    "hast-util-to-string" "^2.0.0"
+    "unified" "^10.0.0"
+    "unist-util-visit" "^4.0.0"
+
 "relateurl@^0.2.7":
   "integrity" "sha1-VNvzd+UUQKypCkzSdGANP/LYiKk="
   "resolved" "https://registry.npmjs.org/relateurl/-/relateurl-0.2.7.tgz"
   "version" "0.2.7"
+
+"remark-directive@^2.0.1":
+  "integrity" "sha512-oosbsUAkU/qmUE78anLaJePnPis4ihsE7Agp0T/oqTzvTea8pOiaYEtfInU/+xMOVTS9PN5AhGOiaIVe4GD8gw=="
+  "resolved" "https://registry.npmjs.org/remark-directive/-/remark-directive-2.0.1.tgz"
+  "version" "2.0.1"
+  dependencies:
+    "@types/mdast" "^3.0.0"
+    "mdast-util-directive" "^2.0.0"
+    "micromark-extension-directive" "^2.0.0"
+    "unified" "^10.0.0"
 
 "remark-gfm@^3.0.0":
   "integrity" "sha512-CXJw5h1iwUW6czFwi4tveoOSlsEZU44hcdNzUxC5uiNi7r/OQySf46AoEihM8/NwBbW1LcsnyGIsHBnbURFw2g=="
@@ -14755,6 +14826,14 @@
   dependencies:
     "call-bind" "^1.0.0"
     "define-properties" "^1.1.3"
+
+"stringify-entities@^4.0.0":
+  "integrity" "sha512-MTxTVcEkorNtBbNpoFJPEh0kKdM6+QbMjLbaxmvaPMmayOXdr/AIVIIJX7FReUVweRBFJfZepK4A4AKgwuFpMQ=="
+  "resolved" "https://registry.npmjs.org/stringify-entities/-/stringify-entities-4.0.2.tgz"
+  "version" "4.0.2"
+  dependencies:
+    "character-entities-html4" "^2.0.0"
+    "character-entities-legacy" "^3.0.0"
 
 "stringify-object@^3.3.0":
   "integrity" "sha512-rHqiFh1elqCQ9WPLIC8I0Q/g/wj5J1eMkyoiD6eoQApWHP0FtlK7rqnhmabL5VUY9JQCcqwwvlOaSuutekgyrw=="

@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext } from "react";
 import { css, useTheme } from "@emotion/react";
 import { Button, Snackbar, Slide } from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
@@ -30,14 +30,7 @@ export const SnackContextProvider: React.FC = ({ children }) => {
     handleSnack: handleErr,
     handleClose: closeErr,
   } = useSnack();
-  const value = useMemo(
-    () => ({
-      handleSuc: handleSuc,
-      handleWarn: handleWarn,
-      handleErr: handleErr,
-    }),
-    [handleSuc, handleWarn, handleErr]
-  );
+  const value = { handleSuc, handleWarn, handleErr };
 
   return (
     <SnackContext.Provider value={value}>

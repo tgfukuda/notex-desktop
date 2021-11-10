@@ -15,7 +15,6 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import utilMsg from "../utils/constant/util";
 import { useSettings } from "../redux/hooks";
-import { appWindow } from "@tauri-apps/api/window";
 
 const HideOnScroll: React.FC<{children: React.ReactElement}> = ({ children }) => {
   const trigger = useScrollTrigger();
@@ -51,27 +50,6 @@ export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
   );
 };
 
-const titlebar = css`
-  height: 30px;
-  background: #329ea3;
-  user-select: none;
-  display: flex;
-  justify-content: flex-end;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-`;
-const titlebarbutton = css`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 30px;
-  height: 30px;
-  &:hover {
-    background: #5bbec3;
-  }
-`;
 const Header: React.FC<{ online?: boolean }> = ({ online = false }) => {
   const theme = useTheme();
   const utilMsgs = utilMsg(useSettings().language);
@@ -81,7 +59,7 @@ const Header: React.FC<{ online?: boolean }> = ({ online = false }) => {
   return online ? (
     <header
       css={css({
-        width: "100vw",
+        width: "100%",
         zIndex: 500,
         height: isRoot ? "15vh" : "10vh",
       })}
@@ -119,7 +97,7 @@ const Header: React.FC<{ online?: boolean }> = ({ online = false }) => {
             <Button component={Link} to={"/browse"} color={"inherit"}>
               {utilMsgs.browse}
             </Button>
-            <Button component={Link} to={"/settings"} color={"inherit"}>
+            <Button component={Link} to={"/setting"} color={"inherit"}>
               <SettingsIcon />
             </Button>
           </Toolbar>

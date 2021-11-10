@@ -279,13 +279,17 @@ const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
       return (
         <Grid item css={row(column.width, theme)}>
           <Paper component="ul" variant="outlined">
-            {meta[column.field].map((tag, i) => (
+            {meta[column.field].slice(0, 3).map((tag, i) => (
               <Chip
                 label={tag}
+                component={"li"}
                 css={chip}
                 key={"row_property_" + column.field + i + "_of_" + idx}
               />
             ))}
+            {3 < meta[column.field].length && (
+              <Chip label={"..."} component={"li"} css={chip} />
+            )}
           </Paper>
         </Grid>
       );
@@ -346,7 +350,7 @@ const RowDetail: React.FC<RowDetailProps> = ({
         switch (detail.field) {
           case "tags":
             return (
-              <Grid item>
+              <Grid item key={"detail_wrapper_tag_" + idx}>
                 <Paper component="ul" variant="outlined" css={ulRoot}>
                   {meta[detail.field].map((tag, i) => (
                     <Chip
@@ -621,7 +625,7 @@ const Browse: React.FC = () => {
       direction={"column"}
       alignContent={"center"}
       css={css({
-        width: "100vw",
+        width: "100%",
       })}
     >
       <Controler

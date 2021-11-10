@@ -6,7 +6,7 @@ import { SnackContextProvider } from "./context/SnackHandler";
 import { ModalContextProvider } from "./context/Modal";
 import store from "./redux/store";
 import { Provider as ReduxProvider } from "react-redux";
-import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
+import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import Top from "./pages/Top";
 
 const themeBase = createTheme({
@@ -64,7 +64,10 @@ const ThemeProvider: React.FC<{ theme: typeof theme }> = ({
 }) => {
   return (
     <MuiThemeProvider theme={theme}>
-      <EmotionProvider theme={theme}>{children}</EmotionProvider>
+      <EmotionProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </EmotionProvider>
     </MuiThemeProvider>
   );
 };

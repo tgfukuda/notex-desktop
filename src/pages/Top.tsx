@@ -1,11 +1,12 @@
 /** @jsxImportSource @emotion/react */
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { css } from "@emotion/react";
 import {
   BrowserRouter as Router,
   Route,
   Switch,
   Redirect,
+  useHistory,
 } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
 import { NoTeXSettings } from "../redux/settings";
@@ -22,28 +23,40 @@ import { useSnackHandler } from "../context/SnackHandler";
 import { listen, Event as TauriEvent, UnlistenFn } from "@tauri-apps/api/event";
 
 const Main: React.FC = () => {
-  const unlisten = useRef<UnlistenFn[]>([]);
+  const history = useHistory();
   const { handleSuc, handleErr } = useSnackHandler();
 
   useEffect(() => {
+    const unlisten: UnlistenFn[] = [];
+
+    listen("routing", (e: TauriEvent<string>) => {
+      history.push({
+        pathname: e.payload,
+      });
+    })
+      .then((ulf) => {
+        unlisten.push(ulf);
+      })
+      .catch((err) => handleErr(err.message));
+
     listen("success", (e: TauriEvent<Response>) => {
       handleSuc(e.payload.message);
     })
       .then((ulf) => {
-        unlisten.current.push(ulf);
+        unlisten.push(ulf);
       })
-      .catch((err) => handleErr(err));
+      .catch((err) => handleErr(err.message));
 
     listen("fail", (e: TauriEvent<Response>) => {
-      handleSuc(e.payload.message);
+      handleErr(e.payload.message);
     })
       .then((ulf) => {
-        unlisten.current.push(ulf);
+        unlisten.push(ulf);
       })
       .catch(() => {});
 
     return () => {
-      for (const ulf of unlisten.current) ulf();
+      for (const ulf of unlisten) ulf();
     };
     // eslint-disable-next-line
   }, []);
@@ -51,7 +64,10 @@ const Main: React.FC = () => {
   return (
     <main
       css={css({
-        minHeight: "70vh",
+        width: "90%",
+        height: "100%",
+        margin: 0,
+        padding: 0,
       })}
     >
       <Switch>
@@ -67,7 +83,7 @@ const Main: React.FC = () => {
         <Route exact path={"/view"}>
           <View />
         </Route>
-        <Route exact path={"/settings"}>
+        <Route exact path={"/setting"}>
           <Settings />
         </Route>
         <Redirect exact from={"/"} to={"/home"} />
@@ -84,12 +100,12 @@ const Main: React.FC = () => {
 const Top: React.FC = () => {
   const { getSetting } = useCommand();
   const dispatch = useAppDispatch();
+  const { handleErr } = useSnackHandler();
 
   useEffect(() => {
     (async () => {
       const setting = await getSetting().catch((err) => {
-        let { code, message } = err as Response;
-        console.error(code, message);
+        handleErr((err as Response).message);
         return undefined;
       });
       if (setting) {

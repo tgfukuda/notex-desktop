@@ -24,7 +24,7 @@ export type SettingType = {
 };
 
 const initialState: SettingType = {
-  target_dir: "~/.notex/target",
+  target_dir: "",
   username: "",
   password: "",
   is_pass_enabled: false,

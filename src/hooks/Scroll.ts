@@ -26,12 +26,11 @@ const useScroll = (container?: HTMLElement) => {
   };
   const pickEl = (idx: string) => {
     const target = container ?? window;
-    const targetY = container
-      ? window.scrollY + container.getBoundingClientRect().top
-      : window.scrollY;
+    const targetY =
+      container?.getBoundingClientRect().top || window.scrollY * -1;
 
     target.scrollTo({
-      top: elements[idx]?.getBoundingClientRect().top + targetY,
+      top: elements[idx]?.getBoundingClientRect().top - targetY - 5,  //extra 5px
       left: 0,
       behavior: "smooth",
     });

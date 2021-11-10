@@ -1,11 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import React, { useState } from "react";
 import { Link, Route, useRouteMatch } from "react-router-dom";
-import {
-  css,
-  useTheme,
-  SerializedStyles,
-} from "@emotion/react";
+import { css, useTheme, SerializedStyles } from "@emotion/react";
 import { Button, Grid, Typography, Collapse } from "@mui/material";
 import { ArrowRightRounded, ArrowDropDownRounded } from "@mui/icons-material";
 
@@ -77,9 +73,9 @@ const WelcomeToNoTeX: React.FC = () => {
       <Typography variant={"body1"} gutterBottom>
         Welcome to NoTeX. This App aims to create document interactivelly.
         <br />
-        NoTeX enables you to write document with markdown and additional extention.
-        you can enjoy NoTeX without any instructions, but recommending read it a little for effetive
-        use.
+        NoTeX enables you to write document with markdown and additional
+        extention. you can enjoy NoTeX without any instructions, but
+        recommending read it a little for effetive use.
       </Typography>
       <Typography variant={"h3"}>What is NoTeX?</Typography>
       <Typography variant={"body1"} gutterBottom>
@@ -94,11 +90,50 @@ const WelcomeToNoTeX: React.FC = () => {
       <Typography variant={"body1"} component={"div"} gutterBottom>
         NoTeX enables you interactivelly to
         <ul>
-          <li>write <a href={"https://commonmark.org/help/"}>markdown</a> powered by
-          <a href={"https://github.com/remarkjs/react-markdown"}>react-markdown</a></li>
-          <li>write LaTeX powered by <a href={"https://katex.org/docs/supported.html"}>KaTeX</a> </li>
-          <li>write graph powered by <a href={"https://d3js.org/"}>d3</a></li>
-          <li>write diagrams and visualizations powered by <a href={"https://mermaid-js.github.io/mermaid/#/"}>mermaid</a></li>
+          <li>
+            write{" "}
+            <a
+              href={"https://commonmark.org/help/"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              markdown
+            </a>{" "}
+            powered by
+            <a
+              href={"https://github.com/remarkjs/react-markdown"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              react-markdown
+            </a>
+          </li>
+          <li>
+            write LaTeX powered by{" "}
+            <a
+              href={"https://katex.org/docs/supported.html"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              KaTeX
+            </a>{" "}
+          </li>
+          <li>
+            write graph powered by{" "}
+            <a href={"https://d3js.org/"} target={"_blank"} rel={"noreferrer"}>
+              d3
+            </a>
+          </li>
+          <li>
+            write diagrams and visualizations powered by{" "}
+            <a
+              href={"https://mermaid-js.github.io/mermaid/#/"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              mermaid
+            </a>
+          </li>
         </ul>
       </Typography>
       <Typography variant={"subtitle2"} css={warning}>
@@ -155,8 +190,8 @@ const UsageOfView: React.FC = () => {
     <div>
       <Typography variant={"h2"}>Usage: View</Typography>
       <Typography variant={"body1"} gutterBottom>
-        You can see the contents of document.
-        Check it and export as PDF if necessary.
+        You can see the contents of document. Check it and export as PDF if
+        necessary.
       </Typography>
     </div>
   );
@@ -171,7 +206,7 @@ const Home: React.FC = () => {
       <Grid
         item
         css={css({
-          width: "15vw",
+          width: "15%",
           margin: theme.spacing(0.5),
           padding: theme.spacing(0),
           backgroundColor: "rgba(48, 48, 48, 0.05)",
@@ -196,7 +231,7 @@ const Home: React.FC = () => {
       <Grid
         item
         css={css({
-          width: "80vw",
+          width: "80%",
           margin: theme.spacing(0.5),
           padding: theme.spacing(0.5),
         })}

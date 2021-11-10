@@ -45,14 +45,21 @@ fn main() {
       main_window.on_menu_event(move |e| {
         println!("eventId: {}", e.menu_item_id());
         match e.menu_item_id() {
-          "new" => main_window_.eval("location.pathname = \"/write\"").unwrap(),
-          "browse" => main_window_
-            .eval("location.pathname = \"/browse\"")
-            .unwrap(),
-          "setting" => main_window_
-            .eval("location.pathname = \"/settings\"")
-            .unwrap(),
-          _ => (),
+          "new" => {
+            match main_window_.emit("routing", "/write") {
+              Ok(()) => (),
+              Err(err) => println!("{}", err)
+            }
+          },
+          "browse" => match main_window_.emit("routing", "/browse") {
+            Ok(()) => (),
+            Err(err) => println!("{}", err)
+          },
+          "setting" => match main_window_.emit("routing", "/setting") {
+            Ok(()) => (),
+            Err(err) => println!("{}", err)
+          },
+          _ => ()
         }
       });
 
@@ -115,7 +122,8 @@ fn main() {
       cmd::get_documents_by_filter,
       cmd::get_document,
       cmd::ls_dir,
-      cmd::print
+      cmd::print,
+      cmd::html
     ])
     .run(tauri::generate_context!())
     .expect(fail_msg);

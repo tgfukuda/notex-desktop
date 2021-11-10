@@ -37,7 +37,7 @@ impl Response {
   }
 
   pub fn client_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
-    println!("{:?}", message);
+    println!("client error: {:?}", message);
     Response {
       code: Code::ClientError,
       message: message.to_string(),
@@ -45,7 +45,7 @@ impl Response {
   }
 
   pub fn process_error<T: ToString + std::fmt::Debug>(message: T) -> Response {
-    println!("{:?}", message);
+    println!("process error: {:?}", message);
     Response {
       code: Code::ProcessError,
       message: format!("{}\n{}", "Internal Process Error", message.to_string()),
@@ -338,6 +338,10 @@ pub fn ls_dir(search: &Path) -> Result<Vec<PathBuf>, Response> {
   }
 }
 
+/*
+ * finish this command don't mean whole process finish.
+ * improve response with tauri event.
+ */ 
 #[derive(Debug, PartialEq, serde::Serialize)]
 struct PayloadPDF<'a> {
   meta: Meta,
@@ -351,4 +355,26 @@ pub fn print(meta: Meta, body: &str, hidden: State<'_, HiddenWindow>) -> Result<
     .emit("print", PayloadPDF { meta, body })
     .map_err(Response::process_error)?;
   Ok(())
+}
+
+#[tauri::command]
+pub fn html(meta: Meta, htmlsrc: &str, path: PathBuf) -> Result<(), Response> {
+  if !path.exists() {
+    return Err(Response::client_error("given path can't be found"));
+  }
+
+  if !path.is_dir() {
+    return Err(Response::client_error("given path is not a directory"));
+  }
+
+  println!("{:?}\n{}\n{:?}", meta, htmlsrc, path);
+
+  OpenOptions::new()
+    .write(true)
+    .truncate(true)
+    .create(true)
+    .open(path.join(&meta.get_hashed_html_name()))
+    .map_err(Response::process_error)?
+    .write_all(htmlsrc.as_bytes())
+    .map_err(Response::process_error)
 }

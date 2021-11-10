@@ -8,8 +8,19 @@ export type Response = {
 };
 
 interface ErrorResponse extends Error {
-  code: string;
+  code: number;
   message: string;
+}
+
+class ErrorResponse extends Error {
+  code: number;
+  message: string;
+
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+    this.message = message;
+  }
 }
 
 export type RequestDocs = {
@@ -34,7 +45,10 @@ const useCommand = () => {
       try {
         return (await invoke("get_setting")) as SettingType;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     updateSetting: async (setting: SettingType) => {
@@ -43,7 +57,10 @@ const useCommand = () => {
           setting,
         })) as Response;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     saveDocument: async (meta: Meta, body: string, overwrite: boolean) => {
@@ -56,7 +73,10 @@ const useCommand = () => {
           },
         })) as Response;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     deleteFile: async (target: Meta) => {
@@ -65,7 +85,10 @@ const useCommand = () => {
           target: target,
         })) as Response;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     getDocumentsByFilter: async ({
@@ -92,7 +115,10 @@ const useCommand = () => {
           },
         })) as ResponseDocs;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     getDocument: async (meta: Meta) => {
@@ -101,15 +127,29 @@ const useCommand = () => {
           meta,
         })) as string;
       } catch (err) {
-        throw err as ErrorResponse;
+        throw new ErrorResponse(
+          (err as ErrorResponse).message,
+          (err as ErrorResponse).code
+        );
       }
     },
     print: async (meta: Meta, body: string) => {
-      await invoke("print", {
+      return (await invoke("print", {
         meta,
         body,
-      });
-      return;
+      })) as undefined;
+    },
+    html: async (meta: Meta, htmlsrc: string, path: string) => {
+      console.log({
+        meta,
+        htmlsrc,
+        path,
+      })
+      return (await invoke("html", {
+        meta,
+        htmlsrc,
+        path,
+      })) as undefined;
     },
   };
 };
