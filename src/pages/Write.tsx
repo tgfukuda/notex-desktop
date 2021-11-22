@@ -1,25 +1,31 @@
 /** @jsxImportSource @emotion/react */
 import React, {
   ChangeEvent,
+  forwardRef,
   useEffect,
+  useImperativeHandle,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
 import { useLocation } from "react-router";
-import { css, useTheme } from "@emotion/react";
+import { css, useTheme, Theme } from "@emotion/react";
 import { alpha } from "@mui/material/styles";
 import {
   InputBase,
   Grid,
-  Button,
   Paper,
   Chip,
   TextField,
   Collapse,
+  FormControlLabel,
+  Switch,
+  Button,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ImageIcon from "@mui/icons-material/Image";
+import LoopIcon from "@mui/icons-material/Loop";
 import useCommand, { Response } from "../api/command";
 import { useSettings } from "../redux/hooks";
 import { Meta } from "../redux/write";
@@ -29,291 +35,377 @@ import writeMsg from "../utils/constant/write/write";
 import Markdown from "../components/Markdown";
 import { Z_INDEXES } from "../utils/constant/util";
 
-const scrollable = css({
-  height: "80vh",
-  overflow: "scroll",
-  "&::-webkit-scrollbar": {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#F5F5F5",
-  },
-  "&::-webkit-scrollbar-thumb": {
-    borderRadius: "5px",
-    "-webkit-box-shadow": "inset 0 0 6px rgba(0, 0, 0, 0.1)",
-    backgroundImage:
-      "-webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867))",
-  },
-});
+const contentsHeight = 80;
+const hoverAlpha = 0.5;
 
-const useInputControll = (handleImageUrl: (url: string) => void) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+const scrollable = css`
+  height: ${contentsHeight}vh;
+  overflow: scroll;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    background-color: #f5f5f5;
+  }
+  &::-webkit-scrollbar-thumb {
+    borderradius: 5px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+    background-image: -webkit-gradient(
+      linear,
+      left bottom,
+      left top,
+      from(#30cfd0),
+      to(#330867)
+    );
+  }
+`;
+
+const useFileControll = (handleBlobUrl: (url: string) => void) => {
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const reader = new FileReader();
   reader.onload = (e: ProgressEvent<FileReader>) => {
     if (e.target && typeof e.target.result === "string")
-      handleImageUrl(e.target.result);
+      handleBlobUrl(e.target.result);
   };
   const handleChange = (_: ChangeEvent) => {
-    if (inputRef.current && inputRef.current.files)
-      reader.readAsDataURL(inputRef.current.files[0]);
+    if (fileRef.current && fileRef.current.files?.length)
+      reader.readAsDataURL(fileRef.current.files[0]);
   };
 
   return {
-    inputRef,
+    fileRef,
     handleChange,
   };
 };
 
-type PostButtonProps = {
-  handleSave: () => void;
-};
-const PostButton: React.FC<PostButtonProps> = ({ handleSave }) => {
-  const theme = useTheme();
-
-  return (
-    <Button
-      onClick={handleSave}
-      css={css({
-        backgroundColor: theme.palette.success.main,
-        "&:hover": {
-          backgroundColor: alpha(theme.palette.success.main, 0.5),
-        },
-      })}
-    >
-      {writeMsg(useSettings().language).save}
-    </Button>
-  );
-};
-
+const buttonIconDefault = (theme: Theme) => css`
+  min-width: 5%;
+  height: 100%;
+  padding: ${theme.spacing(0.2, 1)};
+  background-color: ${theme.palette.info.main};
+  vertical-align: middle;
+  &:hover {
+    background-color: ${alpha(theme.palette.info.main, hoverAlpha)};
+  }
+`;
+const controler = css({
+  width: "100%",
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "flex-start",
+  alignItems: "center",
+});
+const field = css({
+  width: "90%",
+  minHeight: "5vh",
+});
 type ControlerProps = {
   meta: Meta;
-  setMeta: React.Dispatch<React.SetStateAction<Meta>>;
+  overwrite: boolean;
+  dispatchMeta: React.Dispatch<MetaUpdateAction>;
   handleImageUrl: (url: string) => void;
   handleSave: () => void;
+  sync: boolean;
+  setSync: React.Dispatch<React.SetStateAction<boolean>>;
+  handleSync: () => void;
 };
 const Controler: React.FC<ControlerProps> = ({
   meta,
-  setMeta,
+  overwrite,
+  dispatchMeta,
   handleImageUrl,
   handleSave,
+  sync,
+  setSync,
+  handleSync,
 }) => {
   const theme = useTheme();
-  const field = css({
-    width: "30vw",
-    minHeight: "5vh",
-  });
+  const lang = useSettings().language;
+  const buttons = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [tagIdx, setTagIdx] = useState<number>(-1);
-  const [tag, setTag] = useState("");
+  type TagState = {
+    idx: number;
+    label: string;
+  };
+  type TagStateUpdateAction =
+    | {
+        type: "idx";
+        payload: TagState["idx"];
+      }
+    | {
+        type: "label";
+        payload: TagState["label"];
+      }
+    | {
+        type: "set";
+        payload: TagState;
+      }
+    | {
+        type: "reset";
+      };
+  const [tagState, dispatchTagState] = useReducer(
+    (state: TagState, action: TagStateUpdateAction) => {
+      switch (action.type) {
+        case "idx":
+          return {
+            idx: action.payload,
+            label: state.label,
+          };
+        case "label":
+          return {
+            idx: state.idx,
+            label: action.payload,
+          };
+        case "set":
+          return action.payload;
+        case "reset":
+          return {
+            idx: -1,
+            label: "",
+          };
+      }
+    },
+    {
+      idx: -1,
+      label: "",
+    }
+  );
   const handleTag = () => {
-    if (tagIdx === -1 && tag !== "") {
-      setMeta({
-        ...meta,
-        tags: [...meta.tags, tag],
+    if (tagState.idx === -1 && tagState.label !== "") {
+      dispatchMeta({
+        type: "tags",
+        payload: [...meta.tags, tagState.label],
       });
-      setTagIdx(-1);
-      setTag("");
-    } else if (tag !== "") {
-      setMeta({
-        ...meta,
-        tags: [
-          ...meta.tags.slice(0, tagIdx),
-          tag,
-          ...meta.tags.slice(tagIdx + 1),
+      dispatchTagState({
+        type: "reset",
+      });
+    } else if (tagState.label !== "") {
+      dispatchMeta({
+        type: "tags",
+        payload: [
+          ...meta.tags.slice(0, tagState.idx),
+          tagState.label,
+          ...meta.tags.slice(tagState.idx + 1),
         ],
       });
-      setTagIdx(-1);
-      setTag("");
+      dispatchTagState({
+        type: "reset",
+      });
     }
   };
 
-  const { handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
-    if (keyboard["Enter"]) {
-      e.preventDefault();
-      keyboard = {};
-      handleTag();
+  const { handleKeyDown, handleKeyUp, resetKeyBoard } = useKeyAction(
+    (keyboard, e) => {
+      if (keyboard["Enter"]) {
+        e.preventDefault();
+        resetKeyBoard();
+        handleTag();
+      }
     }
-  });
+  );
 
   const handleStop = (e: React.MouseEvent) => e.stopPropagation();
-  const { inputRef, handleChange } = useInputControll(handleImageUrl);
+  const { fileRef, handleChange } = useFileControll(handleImageUrl);
 
   return (
     <>
-      <div
-        css={css({
-          width: "100%",
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "flex-start",
-          alignItems: "center",
-        })}
-      >
-        <Button
-          onClick={() => setOpen(!open)}
-          css={css`
-            max-width: 5%;
-            background-color: rgba(71, 120, 211, 0.568);
-          `}
-        >
+      <div ref={buttons} css={controler}>
+        <Button onClick={() => setOpen(!open)} css={buttonIconDefault}>
           <MoreVertIcon />
         </Button>
         <Button
-          onClick={() => inputRef.current?.click()}
-          css={css`
-            max-width: 5%;
-            background-color: rgba(71, 120, 211, 0.568);
-          `}
+          onClick={() => fileRef.current?.click()}
+          css={buttonIconDefault}
         >
           <ImageIcon />
         </Button>
-        <PostButton handleSave={handleSave} />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={sync}
+              onChange={() => {
+                setSync(!sync);
+                handleSync();
+              }}
+              name={"sync_switch"}
+            />
+          }
+          label={writeMsg(lang).sync}
+          css={css`
+            ${buttonIconDefault(theme)}
+            margin: 0;
+          `}
+        />
+        <Button onClick={handleSync} css={buttonIconDefault}>
+          <LoopIcon />
+        </Button>
+        <Button
+          onClick={handleSave}
+          css={css`
+            ${buttonIconDefault(theme)}
+            background-color: ${theme.palette.success.main};
+            &:hover: {
+              background-color: ${alpha(
+                theme.palette.success.main,
+                hoverAlpha
+              )};
+            }
+          `}
+        >
+          {writeMsg(lang).save}
+        </Button>
         <input
           type={"file"}
-          accept={".png,.jpg,.jpeg,.gif,.pdf"}
-          ref={inputRef}
+          accept={".png,.jpg,.jpeg,.gif"}
+          ref={fileRef}
           onChange={handleChange}
           css={css({
             display: "none",
           })}
         />
       </div>
-      <div
+      <Collapse
+        in={open}
+        orientation={"horizontal"}
         css={css`
-          postion: sticky;
-          display: ${open ? "block" : "none"};
-          top: 0;
+          position: absolute;
+          top: ${buttons.current?.clientHeight || 0}px;
           left: 0;
-          height: 100vh;
-          width: 100vw;
-          background-color: rgba(100, 100, 100, 0.8);
+          ${scrollable}
+          width: 50%;
+          color: ${theme.palette.text.secondary};
+          background-color: ${theme.palette.common.white};
           z-index: ${Z_INDEXES.overlay.ground};
         `}
-        onClick={() => setOpen(false)}
       >
-        <Collapse
-          in={open}
-          orientation={"horizontal"}
+        <ul
+          onClick={handleStop}
           css={css`
-            position: relative;
-            top: 10%;
-            left: 0;
-            height: 100vh;
+            width: 100%;
             z-index: ${Z_INDEXES.overlay.main};
+            height: auto;
+            list-style: none;
           `}
         >
-          <ul>
-            <li>
-              <TextField
-                label={"filename"}
-                defaultValue={meta.filename}
-                onClick={handleStop}
-                onBlur={(e) =>
-                  setMeta({
-                    ...meta,
-                    filename: e.target.value,
-                  })
-                }
-                css={field}
-              />
-            </li>
-            <li>
-              <TextField
-                label={"author"}
-                defaultValue={meta.author}
-                onClick={handleStop}
-                onBlur={(e) =>
-                  setMeta({
-                    ...meta,
-                    author: e.target.value,
-                  })
-                }
-                css={field}
-              />
-            </li>
-            <li>
-              <Paper
-                component={"ul"}
-                variant={"outlined"}
-                onClick={handleStop}
-                css={[
-                  css({
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                    listStyle: "none",
-                    padding: theme.spacing(0.5),
-                    margin: 0,
-                    overflowY: "scroll",
-                    "&::-webkit-scrollbar": {
-                      width: "6px",
-                      height: "6px",
-                    },
-                  }),
-                  field,
-                ]}
-              >
-                {meta.tags.map((tagName, i) => {
-                  return (
-                    <li key={"metadata_tag_" + i}>
-                      {tagIdx === i ? (
-                        <TextField
-                          label={"tag"}
-                          value={tag}
-                          autoFocus
-                          onKeyDown={handleKeyDown}
-                          onKeyUp={handleKeyUp}
-                          onChange={(e) => setTag(e.target.value)}
-                          key={"file_metadata_tag_" + i}
-                        />
-                      ) : (
-                        <Chip
-                          label={
-                            20 < tagName.length
-                              ? tagName.slice(0, 20) + "..."
-                              : tagName
-                          }
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTagIdx(i);
-                            setTag(tagName);
-                          }}
-                          onDelete={() =>
-                            setMeta({
-                              ...meta,
-                              tags: [
-                                ...meta.tags.slice(0, i),
-                                ...meta.tags.slice(i + 1),
-                              ],
-                            })
-                          }
-                          key={"file_metadata_tag_" + i}
-                          css={css({
-                            margin: theme.spacing(0.5),
-                            backgroundColor: "#E3E3E3",
-                          })}
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-                {tagIdx === -1 && (
-                  <li>
-                    <TextField
-                      label={"tag"}
-                      value={tag}
-                      onClick={handleStop}
-                      onKeyDown={handleKeyDown}
-                      onKeyUp={handleKeyUp}
-                      onChange={(e) => setTag(e.target.value)}
-                    />
+          <li>
+            <TextField
+              label={"filename"}
+              value={meta.filename}
+              onChange={(e) =>
+                dispatchMeta({
+                  type: "filename",
+                  payload: e.target.value,
+                })
+              }
+              css={field}
+            />
+          </li>
+          <li>
+            <TextField
+              label={"author"}
+              value={meta.author}
+              disabled={overwrite}
+              onChange={(e) =>
+                dispatchMeta({
+                  type: "author",
+                  payload: e.target.value,
+                })
+              }
+              css={field}
+            />
+          </li>
+          <li>
+            <Paper
+              component={"ul"}
+              variant={"outlined"}
+              onClick={handleStop}
+              css={[
+                css({
+                  display: "flex",
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  listStyle: "none",
+                  padding: theme.spacing(0.5),
+                  margin: 0,
+                  overflowY: "scroll",
+                  "&::-webkit-scrollbar": {
+                    width: "6px",
+                    height: "6px",
+                  },
+                }),
+                field,
+              ]}
+            >
+              {meta.tags.map((label, idx) => {
+                return (
+                  <li key={"metadata_tag_" + idx}>
+                    {tagState.idx === idx ? (
+                      <TextField
+                        label={"tag"}
+                        value={tagState.label}
+                        autoFocus
+                        onKeyDown={handleKeyDown}
+                        onKeyUp={handleKeyUp}
+                        onBlur={handleTag}
+                        onChange={(e) =>
+                          dispatchTagState({
+                            type: "label",
+                            payload: e.target.value,
+                          })
+                        }
+                        key={"file_metadata_tag_" + idx}
+                      />
+                    ) : (
+                      <Chip
+                        label={
+                          20 < label.length ? label.slice(0, 20) + "..." : label
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatchTagState({
+                            type: "set",
+                            payload: { idx, label },
+                          });
+                        }}
+                        onDelete={() =>
+                          dispatchMeta({
+                            type: "tags",
+                            payload: [
+                              ...meta.tags.slice(0, idx),
+                              ...meta.tags.slice(idx + 1),
+                            ],
+                          })
+                        }
+                        key={"file_metadata_tag_" + idx}
+                        css={css({
+                          margin: theme.spacing(0.5),
+                        })}
+                      />
+                    )}
                   </li>
-                )}
-              </Paper>
-            </li>
-          </ul>
-        </Collapse>
-      </div>
+                );
+              })}
+              {tagState.idx === -1 && (
+                <li>
+                  <TextField
+                    label={"tag"}
+                    value={tagState.label}
+                    onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
+                    onBlur={handleTag}
+                    onChange={(e) =>
+                      dispatchTagState({
+                        type: "label",
+                        payload: e.target.value,
+                      })
+                    }
+                  />
+                </li>
+              )}
+            </Paper>
+          </li>
+        </ul>
+      </Collapse>
     </>
   );
 };
@@ -328,16 +420,44 @@ type RawInputProps = {
   raw: string;
   handleRaw: (arg: string) => void;
 };
-const RawInput: React.FC<RawInputProps> = ({ raw, handleRaw }) => {
+type RawInputHandle = {
+  selectionEnd: () => number | null | undefined;
+};
+const RawInputBase: React.ForwardRefRenderFunction<
+  RawInputHandle,
+  RawInputProps
+> = ({ raw, handleRaw }, forwardedRef) => {
   const theme = useTheme();
-  const { ref, handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      keyboard = {};
-      handleRaw(raw + "  ");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [selection, setSelection] = useState({
+    start: 0,
+    end: 0
+  })
+  useImperativeHandle(forwardedRef, () => ({
+    selectionEnd: () => inputRef.current?.selectionEnd,
+  }));
+  const { handleKeyDown, handleKeyUp, resetKeyBoard } = useKeyAction(
+    (keyboard, e) => {
+      if (keyboard["Tab"]) {
+        if (inputRef.current && inputRef.current.selectionEnd !== null) {
+          e.preventDefault();
+          resetKeyBoard();
+          const caretpos = inputRef.current.selectionEnd || raw.length;
+          handleRaw(`${raw.slice(0, caretpos)}${"  "}${raw.slice(caretpos)}`);
+          inputRef.current.selectionStart = inputRef.current.selectionEnd =
+            caretpos + 2;
+          console.log(caretpos)
+        }
+      }
     }
-  });
-  const handleClick = () => ref.current?.focus();
+  );
+  const handleClick = () => inputRef.current?.focus();
+
+  useEffect(() => {
+    if (inputRef.current && inputRef.current === document.activeElement) {
+      
+    }
+  })
 
   return (
     <Grid
@@ -363,33 +483,36 @@ const RawInput: React.FC<RawInputProps> = ({ raw, handleRaw }) => {
         minRows={5}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
-        onChange={(e) => {
-          handleRaw(e.target.value);
-        }}
-        inputRef={ref}
+        onChange={(e) => handleRaw(e.target.value)}
+        inputRef={inputRef}
       />
     </Grid>
   );
 };
+const RawInput = forwardRef(RawInputBase);
 
 const Preview: React.FC<{
   data: Data;
   setLoad: React.Dispatch<React.SetStateAction<ShouldUpdate>>;
-}> = ({ data, setLoad }) => {
+  sync: boolean;
+}> = ({ data, setLoad, sync }) => {
   const theme = useTheme();
-  const timer = useRef<NodeJS.Timeout | null>(null);
+  const timer = useRef<number | null>(null);
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (data.load === ShouldUpdate.USERIN) {
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => {
-        timer.current = null;
-        setLoad(ShouldUpdate.DONE);
-      }, 1500);
+      if (timer.current !== null) clearTimeout(timer.current);
+      timer.current = window.setTimeout(
+        () => {
+          timer.current = null;
+          setLoad(ShouldUpdate.DONE);
+        },
+        sync ? 1500 : 100 //too short interval results in no effect?
+      );
     }
     setLoad(ShouldUpdate.WAIT);
-  }, [data.load]);
+  });
 
   return (
     <Grid
@@ -409,38 +532,99 @@ const Preview: React.FC<{
         () => (
           <Markdown container={container} md={data.raw} />
         ),
+        //eslint-disable-next-line
         [data.load !== ShouldUpdate.DONE]
       )}
     </Grid>
   );
 };
 
+type MetaUpdateAction =
+  | {
+      type: "filename";
+      payload: Meta["filename"];
+    }
+  | {
+      type: "author";
+      payload: Meta["author"];
+    }
+  | {
+      type: "tags";
+      payload: Meta["tags"];
+    }
+  | {
+      type: "shortcut";
+      payload: Meta["shortcut"];
+    }
+  | {
+      type: "set";
+      payload: Meta;
+    };
 type Data = {
   raw: string;
   load: ShouldUpdate;
 };
 const Edit: React.FC = () => {
   const theme = useTheme();
-  const location = useLocation();
+  const location = useLocation<Meta>();
   const [raw, setRaw] = useState("");
+  const rawInputRef = useRef<RawInputHandle>(null);
   const [load, setLoad] = useState<ShouldUpdate>(ShouldUpdate.DONE);
   const overwrite = useRef(false);
+  const [sync, setSync] = useState(false);
+  const handleSync = () => setLoad(ShouldUpdate.USERIN);
   const handleRaw = (arg: string) => {
     setRaw(arg);
-    setLoad(ShouldUpdate.USERIN);
+    if (sync) handleSync();
   };
   const handleImageUrl = (url: string) => {
-    setRaw(raw + `\n![may be invalid file type](${url})`);
-    setLoad(ShouldUpdate.USERIN);
+    const caretpos = rawInputRef.current?.selectionEnd() || raw.length;
+    setRaw(
+      `${raw.slice(0, caretpos)}![may not be image](${url})${raw.slice(
+        caretpos
+      )}`
+    );
+    handleSync();
   };
-  const [meta, setMeta] = useState<Meta>({
-    filename: "",
-    created_at: "",
-    updated_at: "",
-    author: "",
-    tags: [],
-    shortcut: {},
-  });
+  const [meta, dispatchMeta] = useReducer(
+    (state: Meta, action: MetaUpdateAction) => {
+      switch (action.type) {
+        case "filename": {
+          overwrite.current = location.state?.filename === state.filename;
+          return {
+            ...state,
+            filename: action.payload,
+          };
+        }
+        case "author":
+          return {
+            ...state,
+            author: action.payload,
+          };
+        case "tags":
+          return {
+            ...state,
+            tags: [...new Set(action.payload)],
+          };
+        case "shortcut":
+          return {
+            ...state,
+            shortcut: action.payload,
+          };
+        case "set":
+          return action.payload;
+      }
+    },
+    {
+      filename: "",
+      created_at: "",
+      updated_at: "",
+      author: "",
+      tags: [],
+      shortcut: {},
+      html_src: false,
+    }
+  );
   const { handleSuc, handleErr } = useSnackHandler();
   const { saveDocument, getDocument } = useCommand();
   const handleSave = async () => {
@@ -448,10 +632,12 @@ const Edit: React.FC = () => {
       const res = await saveDocument(meta, raw, overwrite.current).catch(
         (err) => {
           handleErr((err as Response).message);
+          return undefined;
         }
       );
       if (res) {
         handleSuc(res.message);
+        location.state = meta;
         overwrite.current = true;
       }
     } else {
@@ -462,38 +648,56 @@ const Edit: React.FC = () => {
     async (keyboard, evt) => {
       if (keyboard["Control"] && keyboard["s"]) {
         evt.preventDefault();
+        keyboard = {};
         await handleSave();
+      } else if (keyboard["Control"] && keyboard["l"]) {
+        evt.preventDefault();
+        keyboard = {};
+        handleSync();
       }
     }
   );
+  const autosaveInterval = useSettings().autosave;
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
 
-    const autosave = setInterval(async () => {
-      await handleSave();
-    }, 1000 * 60 * 30);
+    let autosave: number | null = null;
+    if (autosaveInterval) {
+      autosave = window.setInterval(
+        async () => await handleSave(),
+        autosaveInterval
+      );
+    }
 
-    if (location.search) {
+    if (location.state) {
       (async () => {
-        const body = await getDocument(location.state as Meta).catch((err) =>
-          handleErr((err as Response).message)
-        );
+        const body = await getDocument(location.state).catch((err) => {
+          handleErr((err as Response).message);
+          return undefined;
+        });
 
-        if (body) {
+        if (body !== undefined) {
           setRaw(body);
-          setMeta(location.state as Meta);
+          dispatchMeta({
+            type: "set",
+            payload: location.state,
+          });
           overwrite.current = true;
         }
+        handleSync();
       })();
     }
 
     return () => {
-      clearInterval(autosave);
+      if (autosave) {
+        clearInterval(autosave);
+      }
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
     };
+    //eslint-disable-next-line
   }, []);
 
   return (
@@ -503,20 +707,24 @@ const Edit: React.FC = () => {
       justifyContent={"space-evenly"}
       alignItems={"stretch"}
       css={css({
-        width: "100vw",
+        position: "relative",
+        width: "100%",
         height: "100%",
         margin: theme.spacing(0.5),
       })}
     >
       <Controler
         meta={meta}
-        setMeta={setMeta}
+        overwrite={overwrite.current}
+        dispatchMeta={dispatchMeta}
         handleImageUrl={handleImageUrl}
         handleSave={handleSave}
+        sync={sync}
+        setSync={setSync}
+        handleSync={handleSync}
       />
-      <RawInput raw={raw} handleRaw={handleRaw} />
-      <Preview data={{ raw, load }} setLoad={setLoad} />
-      <PostButton handleSave={handleSave} />
+      <RawInput raw={raw} handleRaw={handleRaw} ref={rawInputRef} />
+      <Preview data={{ raw, load }} setLoad={setLoad} sync={sync} />
     </Grid>
   );
 };

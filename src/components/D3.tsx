@@ -83,12 +83,22 @@ function isNumeral(char: string) {
   return !isNaN(parseInt(char)) || char === ".";
 }
 
+const parseErrors = {
+  lackOfFunctionIdentifier: "Parse Error: function identifier expected",
+  lackOfOperator: "Parse Error: binary operator expected",
+  lackOfIdentifier: "Parse Error: identifier expected",
+  unreachable: "UnreachableError",
+  lackOfBra: "Parse Error: unmatched (",
+  lackOfCket: "Parse Error: unmatched )",
+  emptyInput: "ParseError: empty input",
+};
+
 type Mapping = {
   operator: string | undefined;
   left: ParseResult | undefined;
   right: ParseResult | undefined;
 };
-type ParseResult = number | string | Mapping;
+export type ParseResult = number | string | Mapping;
 /**
  *
  * multiple arguments function is out of scope.
@@ -96,65 +106,86 @@ type ParseResult = number | string | Mapping;
  * however d3 has the way to express it
  * and they could be potentially supported in the future scope.
  */
-export function parseFormula(
-  formula: string,
-  initMapping: Mapping = {
-    operator: undefined,
-    left: undefined,
-    right: undefined,
-  }
-): ParseResult {
-  //preprocess
-  if (isMonoOp(formula[0])) formula = "0" + formula;
-  formula = formula
-    .replaceAll("_", "")
-    .replaceAll(
-      /sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|log|floor|ceil|random|abs|sign|sqrt/gi,
-      (r) => r + "_"
-    );
+export function parseFormula(formula: string): ParseResult {
+  function __inner(
+    _formula: string,
+    initMapping: Mapping = {
+      operator: undefined,
+      left: undefined,
+      right: undefined,
+    }
+  ): ParseResult {
+    let formula = _formula;
+    if (isMonoOp(_formula[0])) formula = "0" + _formula;
 
-  let mapping = initMapping;
-  let accumulator: string | number | Mapping = "",
-    braCnt = 0,
-    _num: string = "",
-    _var = "",
-    flag = null;
+    let mapping = initMapping;
+    let accumulator: string | number | Mapping = "",
+      braCnt = 0,
+      _num: string = "",
+      _var = "",
+      flag = null;
 
-  for (let i = 0; i < formula.length; i++) {
-    const char = formula[i];
-    if (char === " ") continue;
+    for (let i = 0; i < formula.length; i++) {
+      const char = formula[i];
+      if (char === " ") continue;
 
-    if (braCnt === 0) {
-      if (char === "(") braCnt++;
-      else if (isApplyOp(char)) {
-        if (_var)
-          flag = {
-            operator: char,
-            left: _var,
-            right: undefined,
-          };
-        else throw "Parse Error";
+      if (braCnt === 0) {
+        if (char === "(") braCnt++;
+        else if (isApplyOp(char)) {
+          if (_var)
+            flag = {
+              operator: char,
+              left: _var,
+              right: undefined,
+            };
+          else
+            throw new Error(
+              `${parseErrors.lackOfFunctionIdentifier}. pos: ${i}.`
+            );
 
-        _num = "";
-        _var = "";
-        accumulator = "";
-      } else if (isBiOp(char)) {
-        if (parseFloat(_num) || _var || accumulator) {
-          if (mapping.left === undefined) {
-            mapping.operator = char;
-            mapping.left = parseFloat(_num) || _var || accumulator;
-          } else if (mapping.right === undefined) {
-            if (isMonoOp(mapping.operator || "")) {
-              const arg2 = parseFormula(formula.slice(i + 1), {
+          _num = "";
+          _var = "";
+          accumulator = "";
+        } else if (isBiOp(char)) {
+          if (!Number.isNaN(parseFloat(_num)) || _var || accumulator) {
+            if (mapping.left === undefined) {
+              mapping.operator = char;
+              mapping.left = parseFloat(_num) || _var || accumulator || 0;
+            } else if (mapping.right === undefined) {
+              if (isMonoOp(mapping.operator || "")) {
+                return {
+                  ...mapping,
+                  right: __inner(formula.slice(i + 1), {
+                    operator: char,
+                    left: parseFloat(_num) || _var || accumulator || 0,
+                    right: undefined,
+                  }),
+                };
+              } else {
+                mapping = {
+                  operator: char,
+                  left: {
+                    ...mapping,
+                    right: parseFloat(_num) || _var || accumulator || 0,
+                  },
+                  right: undefined,
+                };
+              }
+            } else throw new Error(`${parseErrors.lackOfOperator}. pos: ${i}`);
+          } else throw new Error(`${parseErrors.lackOfIdentifier}. pos: ${i}`);
+
+          _num = "";
+          _var = "";
+          accumulator = "";
+        } else if (isMonoOp(char)) {
+          if (!Number.isNaN(parseFloat(_num)) || _var || accumulator) {
+            if (mapping.left === undefined) {
+              mapping = {
                 operator: char,
                 left: parseFloat(_num) || _var || accumulator || 0,
                 right: undefined,
-              });
-              return {
-                ...mapping,
-                right: arg2,
               };
-            } else {
+            } else if (mapping.right === undefined) {
               mapping = {
                 operator: char,
                 left: {
@@ -163,90 +194,73 @@ export function parseFormula(
                 },
                 right: undefined,
               };
-            }
-          } else throw "Parse Error";
-        } else throw "Parse Error";
+            } else throw new Error(`${parseErrors.lackOfOperator}. pos: ${i}`);
+          } else throw new Error(`${parseErrors.lackOfIdentifier}. pos: ${i}`);
 
-        _num = "";
-        _var = "";
-        accumulator = "";
-      } else if (isMonoOp(char)) {
-        if (parseFloat(_num) || _var || accumulator) {
-          if (mapping.left === undefined) {
-            mapping = {
-              operator: char,
-              left: parseFloat(_num) || _var || accumulator || 0,
-              right: undefined,
-            };
-          } else if (mapping.right === undefined) {
-            mapping = {
-              operator: char,
-              left: {
-                ...mapping,
-                right: parseFloat(_num) || _var || accumulator || 0,
-              },
-              right: undefined,
-            };
-          } else throw "Parse Error";
-        } else throw "Parse Error";
+          _num = "";
+          _var = "";
+          accumulator = "";
+        } else if (!isNumeral(char) && !_num && !accumulator) _var += char;
+        else if (!_var && !accumulator) _num += char;
+        else throw new Error(parseErrors.unreachable);
+      } else if (0 < braCnt) {
+        if (char === ")") {
+          braCnt--;
+          if (braCnt === 0) {
+            if (flag) {
+              if (typeof accumulator === "string") {
+                accumulator = {
+                  operator: flag.operator,
+                  left: flag.left,
+                  right: __inner(accumulator),
+                };
+              } else throw new Error(parseErrors.unreachable);
+            } else if (typeof accumulator === "string" && accumulator)
+              accumulator = __inner(accumulator);
+            else throw new Error(parseErrors.unreachable);
+            continue;
+          }
+        } else if (char === "(") braCnt++;
+        accumulator += char;
+      } else throw new Error(`${parseErrors.lackOfBra}. pos: ${i}.`);
+    }
 
-        _num = "";
-        _var = "";
-        accumulator = "";
-      } else if (!isNumeral(char) && !_num && !accumulator) _var += char;
-      else if (!_var && !accumulator) _num += char;
-      else throw "Parse Error";
-    } else if (0 < braCnt) {
-      if (char === ")") {
-        braCnt--;
-        if (braCnt === 0) {
-          if (flag) {
-            if (typeof accumulator === "string") {
-              const arg2 = parseFormula(accumulator);
-              accumulator = {
-                operator: flag.operator,
-                left: flag.left,
-                right: arg2,
-              };
-            } else throw "Parse Error";
-          } else if (typeof accumulator === "string" && accumulator)
-            accumulator = parseFormula(accumulator);
-          else throw "Parse Error";
-          continue;
-        }
-      } else if (char === "(") braCnt++;
-      accumulator += char;
-    } else throw "Parse Error";
+    if (0 < braCnt) throw new Error(parseErrors.lackOfCket);
+
+    if (mapping.right === undefined)
+      mapping.right = parseFloat(_num) || _var || accumulator || 0;
+
+    if (mapping.operator === undefined) {
+      const res = mapping.left || mapping.right;
+      if (res !== undefined) return res;
+      else throw new Error(parseErrors.emptyInput);
+    }
+
+    return mapping;
   }
 
-  if (mapping.right === undefined)
-    mapping.right = parseFloat(_num) || _var || accumulator || 0;
-
-  if (mapping.operator === undefined) {
-    const res = mapping.left || mapping.right;
-    if (res !== undefined) return res;
-    else throw "Parse Error";
-  }
-
-  return mapping;
+  return __inner(
+    formula
+      .trim()
+      .replaceAll(
+        /sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|log|floor|ceil|random|abs|sign|sqrt/gi,
+        (r) => r + "_"
+      )
+  );
 }
 
 /**
  * in this function, tests with regex variable is not working intentionally
  * why?
+ * TODO -- trampoline
  */
 const ConstantMap = {
   pi: Math.PI,
   e: Math.E,
 } as const;
-export const reduction: (
-  x: number
-) => (parsedFunction: ParseResult) => Promise<number> =
-  (x: number) => async (parsedFunction: ParseResult) => {
-    async function __inner(
-      x: number,
-      parsedFunction: ParseResult
-    ): Promise<number | string> {
+export const reduction: (parsedFunction: ParseResult) => (x: number) => number =
+  (parsedFunction: ParseResult) => (x: number) => {
+    function __inner(x: number, parsedFunction: ParseResult): number | string {
       if (typeof parsedFunction === "string") {
         if (
           /sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|log|floor|ceil|random|abs|sign|sqrt/gi.test(
@@ -262,14 +276,12 @@ export const reduction: (
         const { operator, left, right } = parsedFunction;
         if (operator === undefined || left === undefined || right === undefined)
           return 0;
-        const calculatedArg1 = await __inner(x, left);
-        const calculatedArg2 = await __inner(x, right);
-        return calc(operator, calculatedArg1, calculatedArg2);
+        return calc(operator, __inner(x, left), __inner(x, right));
       } else return 0;
     }
 
-    const res = await __inner(x, parsedFunction);
-    if (typeof res === "string") throw "Invalid Argument";
+    const res = __inner(x, parsedFunction);
+    if (typeof res === "string") throw new Error("Invalid Argument");
     else return res;
   };
 
@@ -277,6 +289,15 @@ export const reduction: (
  * d3 typing with react is a bit painfull
  * TODO -- remove `any`
  */
+const container = (length: number) =>
+  css({
+    width: "100%",
+    minHeight: length ? undefined : 300,
+  });
+const svg = (length: number) =>
+  css({
+    display: length ? "block" : "none",
+  });
 export type Coordinate = {
   x: number;
   y: number;
@@ -289,9 +310,11 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
     x: c.x,
     y: 0,
   }));
+  const chartRef = useRef(null);
 
-  const chartRef = useD3(
-    (svg) => {
+  useEffect(() => {
+    if (chartRef.current) {
+      const svg = d3.select(chartRef.current);
       const height = 480;
       const width = 928;
       const margin = { top: 20, right: 40, bottom: 30, left: 40 };
@@ -358,18 +381,12 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
         .attr("stroke-miterlimit", "1");
 
       svg.attr("viewBox", `0 0 ${width} ${height}`);
-    },
-    [...data]
-  );
+    }
+  });
 
   return (
-    <div
-      css={css({
-        width: "100%",
-        height: 350,
-      })}
-    >
-      <svg ref={chartRef}>
+    <div css={container(data.length)}>
+      <svg ref={chartRef} css={svg(data.length)}>
         <path className="plot-area" />
         <path className="plot-line-0-area" />
         <g className="x-axis" />
@@ -378,17 +395,3 @@ export const FunctionD3: React.FC<FunctionD3Props> = ({ data }) => {
     </div>
   );
 };
-
-const useD3 = (renderChartFn: (el: any) => void, deps: unknown[]) => {
-  const ref: React.RefObject<any> = useRef(null);
-
-  useEffect(() => {
-    renderChartFn(d3.select(ref.current));
-    return () => {};
-    // eslint-disable-next-line
-  }, [...deps]);
-
-  return ref;
-};
-
-export default useD3;

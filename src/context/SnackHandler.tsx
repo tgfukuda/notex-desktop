@@ -1,10 +1,10 @@
 /** @jsxImportSource @emotion/react */
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext } from "react";
 import { css, useTheme } from "@emotion/react";
 import { Button, Snackbar, Slide } from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
 import { useSnack } from "../hooks/Snack";
-import {Z_INDEXES} from "../utils/constant/util";
+import { Z_INDEXES } from "../utils/constant/util";
 
 const SnackContext = createContext({
   handleSuc: (msg: string) => alert(msg),
@@ -30,14 +30,7 @@ export const SnackContextProvider: React.FC = ({ children }) => {
     handleSnack: handleErr,
     handleClose: closeErr,
   } = useSnack();
-  const value = useMemo(
-    () => ({
-      handleSuc: handleSuc,
-      handleWarn: handleWarn,
-      handleErr: handleErr,
-    }),
-    [handleSuc, handleWarn, handleErr]
-  );
+  const value = { handleSuc, handleWarn, handleErr };
 
   return (
     <SnackContext.Provider value={value}>
@@ -49,6 +42,13 @@ export const SnackContextProvider: React.FC = ({ children }) => {
   );
 };
 export const useSnackHandler = () => useContext(SnackContext);
+
+/**
+ * params
+ */
+const autoHideDuration = 4000;
+const anchorOriginVertical = "top";
+const anchorOriginHorizon = "right";
 
 interface SnackComponent {
   message: string;
@@ -62,11 +62,11 @@ const SuccessSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
   return (
     <Snackbar
       anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: anchorOriginVertical,
+        horizontal: anchorOriginHorizon,
       }}
       open={open}
-      autoHideDuration={4000}
+      autoHideDuration={autoHideDuration}
       onClose={onClose}
       message={message}
       action={
@@ -95,11 +95,11 @@ const ErrorSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
   return (
     <Snackbar
       anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: anchorOriginVertical,
+        horizontal: anchorOriginHorizon,
       }}
       open={open}
-      autoHideDuration={4000}
+      autoHideDuration={autoHideDuration}
       onClose={onClose}
       message={message}
       action={
@@ -128,11 +128,11 @@ const WarningSnack: React.FC<SnackComponent> = ({ message, open, onClose }) => {
   return (
     <Snackbar
       anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: anchorOriginVertical,
+        horizontal: anchorOriginHorizon,
       }}
       open={open}
-      autoHideDuration={4000}
+      autoHideDuration={autoHideDuration}
       onClose={onClose}
       message={message}
       action={

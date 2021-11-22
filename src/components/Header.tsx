@@ -16,15 +16,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import utilMsg from "../utils/constant/util";
 import { useSettings } from "../redux/hooks";
 
-type Props = {
-  children: React.ReactElement;
-};
-
-type DummyProps = {
-  width: number;
-};
-
-const HideOnScroll: React.FC<Props> = ({ children }) => {
+const HideOnScroll: React.FC<{children: React.ReactElement}> = ({ children }) => {
   const trigger = useScrollTrigger();
 
   return (
@@ -33,11 +25,13 @@ const HideOnScroll: React.FC<Props> = ({ children }) => {
     </Slide>
   );
 };
-
 HideOnScroll.propTypes = {
   children: PropTypes.element.isRequired,
 };
 
+type DummyProps = {
+  width: number;
+};
 export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
   const theme = useTheme();
   return (
@@ -56,16 +50,16 @@ export const DummyHeader: React.FC<DummyProps> = ({ width }) => {
   );
 };
 
-const Header = () => {
+const Header: React.FC<{ online?: boolean }> = ({ online = false }) => {
   const theme = useTheme();
   const utilMsgs = utilMsg(useSettings().language);
   const path = useLocation().pathname;
   const isRoot = path === "/" || path.startsWith("/home");
 
-  return (
+  return online ? (
     <header
       css={css({
-        width: "100vw",
+        width: "100%",
         zIndex: 500,
         height: isRoot ? "15vh" : "10vh",
       })}
@@ -103,16 +97,15 @@ const Header = () => {
             <Button component={Link} to={"/browse"} color={"inherit"}>
               {utilMsgs.browse}
             </Button>
-            <Button component={Link} to={"/test"} color={"inherit"}>
-              test
-            </Button>
-            <Button component={Link} to={"/settings"} color={"inherit"}>
+            <Button component={Link} to={"/setting"} color={"inherit"}>
               <SettingsIcon />
             </Button>
           </Toolbar>
         </AppBar>
       </HideOnScroll>
     </header>
+  ) : (
+    <React.Fragment />
   );
 };
 

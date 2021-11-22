@@ -1,4 +1,4 @@
-pub mod command;
+pub mod cmd;
 pub mod constants;
 pub mod model;
 
@@ -7,8 +7,9 @@ use std::{
   fs::{DirBuilder, File, OpenOptions},
   io::{ErrorKind, Read, Write},
   path::{Path, PathBuf},
-  sync::Mutex,
+  sync::{Arc, Mutex},
 };
+use tauri::Window;
 
 #[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "language")]
@@ -27,6 +28,11 @@ impl ToString for Language {
   }
 }
 
+/**
+ * should not have inner setting state if considering multiple running process.
+ * get setting by every time with fs.
+ * however, currently not considering such pattern and assuming only one process.
+ */
 #[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Setting {
   target_dir: PathBuf,
@@ -51,8 +57,8 @@ impl Setting {
 }
 impl Default for Setting {
   fn default() -> Self {
-    let commands = vec!["save".to_string(), "insertImage".to_string()];
-    let short_cuts = vec!["Control s".to_string(), "Control i".to_string()];
+    let commands = vec!["save".to_string(), "insertImage".to_string(), "syncDoc".to_string()];
+    let shortcuts = vec!["Control s".to_string(), "Control i".to_string(), "Control l".to_string()];
 
     Setting {
       target_dir: dirs::home_dir()
@@ -66,7 +72,7 @@ impl Default for Setting {
       autosave: None,
       key_bindings: commands
         .into_iter()
-        .zip(short_cuts.into_iter())
+        .zip(shortcuts.into_iter())
         .collect::<HashMap<String, String>>(),
       is_new: true,
     }
@@ -78,15 +84,28 @@ pub struct Env(Mutex<Setting>);
 #[derive(Debug, PartialEq, Clone)]
 pub struct Memo {
   pub all_tags: HashSet<String>,
-  pub page: usize
+  pub page: usize,
 }
 pub struct Casher(Mutex<Memo>);
 impl Casher {
   pub fn new() -> Casher {
     Casher(Mutex::new(Memo {
       all_tags: HashSet::new(),
-      page: 0usize
+      page: 0usize,
     }))
+  }
+}
+
+pub struct MainWindow(Arc<Mutex<Window>>);
+impl MainWindow {
+  pub fn new(window: Window) -> MainWindow {
+    MainWindow(Arc::new(Mutex::new(window)))
+  }
+}
+pub struct HiddenWindow(Arc<Mutex<Window>>);
+impl HiddenWindow {
+  pub fn new(window: Window) -> HiddenWindow {
+    HiddenWindow(Arc::new(Mutex::new(window)))
   }
 }
 
@@ -113,21 +132,17 @@ pub fn initialize() -> Env {
 
   if !root.exists() {
     is_new = true;
-    DirBuilder::new()
-      .create(root.clone())
-      .unwrap();
+    DirBuilder::new().create(root.clone()).unwrap();
     DirBuilder::new().create(default_target.clone()).unwrap();
-    
     File::create(conf.clone())
-        .and_then(|mut f| {
-          f.write_all(
-            serde_json::to_string(&Setting::default())
-              .unwrap()
-              .as_bytes(),
-          )
-        })
-        .unwrap();
-  
+      .and_then(|mut f| {
+        f.write_all(
+          serde_json::to_string(&Setting::default())
+            .unwrap()
+            .as_bytes(),
+        )
+      })
+      .unwrap();
     File::create(index.clone()).unwrap();
   }
 
@@ -161,16 +176,7 @@ pub fn initialize() -> Env {
     }
   }
 
-  println!("devicename: {}", whoami::devicename());
-  println!("distrobution: {}", whoami::distro());
-  println!("hostname: {}", whoami::hostname());
-  println!(
-    "language: {}",
-    whoami::lang()
-      .next()
-      .unwrap_or(Language::English.to_string())
-  );
-  println!("realname: {}", whoami::realname());
+  println!("distribution: {}", whoami::distro());
   println!("platform: {}", whoami::platform());
   println!("hello {}!", whoami::username());
   let mut buf = String::new();
@@ -179,7 +185,7 @@ pub fn initialize() -> Env {
     .write(false)
     .append(false)
     .open(conf)
-    .map(|mut file| file.read_to_string(&mut buf).unwrap())
+    .map(|mut file| file.read_to_string(&mut buf).expect("Failed to initialize"))
   {
     Ok(_) => Setting::from_string(&buf).unwrap_or_default(),
     Err(ref e) if e.kind() == ErrorKind::NotFound => Setting::default(),

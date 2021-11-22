@@ -1,15 +1,15 @@
 /** @jsxImportSource @emotion/react */
 import React from "react";
-import {css} from "@emotion/react"
+import { css } from "@emotion/react";
 import { AppBar, Toolbar, Grid } from "@mui/material";
 import github32px from "../img/GitHub-Mark-Light-32px.png";
 import utilMsg, { VERSION } from "../utils/constant/util";
 import { useSettings } from "../redux/hooks";
 
-const Footer: React.FC = () => {
+const Footer: React.FC<{ online?: boolean }> = ({ online = false }) => {
   const utilMsgs = utilMsg(useSettings().language);
 
-  return (
+  return online ? (
     <AppBar
       position="static"
       component={"footer"}
@@ -26,7 +26,11 @@ const Footer: React.FC = () => {
         alignItems={"stretch"}
       >
         <Grid item>
-          <a href={"https://github.com/FukudaTaiga"} target={"blank"}>
+          <a
+            href={"https://github.com/tgfukuda"}
+            target={"_blank"}
+            rel={"noreferrer"}
+          >
             <img
               src={github32px}
               alt={"GitHub"}
@@ -34,7 +38,7 @@ const Footer: React.FC = () => {
               height={32}
               css={css({
                 position: "relative",
-                  top: 0,
+                top: 0,
               })}
             />
           </a>
@@ -42,6 +46,8 @@ const Footer: React.FC = () => {
         <Grid item>{utilMsgs.version + " " + VERSION}</Grid>
       </Grid>
     </AppBar>
+  ) : (
+    <React.Fragment />
   );
 };
 

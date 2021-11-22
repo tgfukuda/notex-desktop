@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
-import React, { useEffect, useState, useRef, ChangeEvent } from "react";
-import { useHistory, useLocation } from "react-router";
+import React, { useEffect, useState, ChangeEvent } from "react";
+import { useHistory } from "react-router";
 import { css, useTheme, Theme } from "@emotion/react";
 import {
   Paper,
@@ -19,13 +19,13 @@ import {
   ExpandLessRounded,
   ChevronRightRounded,
 } from "@mui/icons-material";
+import { alpha } from "@mui/material/styles";
 import useModal from "../context/Modal";
 import { useSnackHandler } from "../context/SnackHandler";
 import useCommand, { Response } from "../api/command";
 import { useSettings } from "../redux/hooks";
 import { RequestDocs, ResponseDocs } from "../api/command";
 import { Meta } from "../redux/write";
-import { Language } from "../redux/settings";
 import browseMsg from "../utils/constant/browse";
 import utilMsg from "../utils/constant/util";
 
@@ -76,36 +76,36 @@ const row = (width: number, theme: Theme) => {
 
 const previewButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#86D6B2",
+      backgroundColor: theme.palette.success.main,
     },
     margin: theme.spacing(1),
   });
 
 const editButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#FFF7AA",
+      backgroundColor: theme.palette.warning.main,
     },
     margin: theme.spacing(1),
   });
 
 const deleteButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#D6431B",
+      backgroundColor: theme.palette.error.main,
     },
     margin: theme.spacing(1),
   });
 
 const cancelButton = (theme: Theme) =>
   css({
-    backgroundColor: "#93C3E3",
+    backgroundColor: theme.palette.info.main,
     "&:hover": {
-      backgroundColor: "#E3E3E3",
+      backgroundColor: alpha(theme.palette.info.main, 0.05),
     },
     margin: theme.spacing(1),
   });
@@ -236,22 +236,11 @@ const Controler: React.FC<ControlerProps> = ({
   );
 };
 
-type ColumnProps = {
-  width: number;
+type MetaDisplay = {
   field: keyof Omit<Meta, "shortcut">;
+  width?: number; //width provided property dispalayed on header
 };
-const Column: React.FC<ColumnProps> = ({ width, field }) => {
-  const theme = useTheme();
-  const msgs = browseMsg(useSettings().language);
-
-  return (
-    <Grid item css={row(width, theme)}>
-      {msgs[field]}
-    </Grid>
-  );
-};
-
-const columns: MetaDisplay[] = [
+const fields: MetaDisplay[] = [
   {
     field: "filename",
     width: 60,
@@ -260,11 +249,38 @@ const columns: MetaDisplay[] = [
     field: "tags",
     width: 30,
   },
+  {
+    field: "created_at",
+  },
+  {
+    field: "updated_at",
+  },
+  {
+    field: "author",
+  },
+  {
+    field: "html_src",
+  },
 ];
+
+type ColumnProps = {
+  column: MetaDisplay & { width: number };
+};
+const Column: React.FC<ColumnProps> = ({ column }) => {
+  const theme = useTheme();
+  const msgs = browseMsg(useSettings().language);
+
+  return (
+    <Grid item css={row(column.width, theme)}>
+      {msgs[column.field]}
+    </Grid>
+  );
+};
+
 type RowHeaderProps = {
   idx: number;
   meta: Meta;
-  column: MetaDisplay;
+  column: MetaDisplay & { width: number };
 };
 const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
   const theme = useTheme();
@@ -279,13 +295,17 @@ const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
       return (
         <Grid item css={row(column.width, theme)}>
           <Paper component="ul" variant="outlined">
-            {meta[column.field].map((tag, i) => (
+            {meta[column.field].slice(0, 3).map((tag, i) => (
               <Chip
                 label={tag}
+                component={"li"}
                 css={chip}
                 key={"row_property_" + column.field + i + "_of_" + idx}
               />
             ))}
+            {3 < meta[column.field].length && (
+              <Chip label={"..."} component={"li"} css={chip} />
+            )}
           </Paper>
         </Grid>
       );
@@ -294,32 +314,6 @@ const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
   }
 };
 
-type MetaDisplay = {
-  field: keyof Omit<Meta, "shortcut">;
-  width: number;
-};
-const details: MetaDisplay[] = [
-  {
-    field: "filename",
-    width: 60,
-  },
-  {
-    field: "tags",
-    width: 30,
-  },
-  {
-    field: "created_at",
-    width: 17,
-  },
-  {
-    field: "updated_at",
-    width: 17,
-  },
-  {
-    field: "author",
-    width: 10,
-  },
-];
 type RowDetailProps = {
   idx: number;
   meta: Meta;
@@ -342,11 +336,11 @@ const RowDetail: React.FC<RowDetailProps> = ({
 
   return (
     <Grid container direction={"column"} component={AccordionDetails}>
-      {details.map((detail) => {
+      {fields.map((detail) => {
         switch (detail.field) {
           case "tags":
             return (
-              <Grid item>
+              <Grid item key={"detail_wrapper_tag_" + idx}>
                 <Paper component="ul" variant="outlined" css={ulRoot}>
                   {meta[detail.field].map((tag, i) => (
                     <Chip
@@ -364,7 +358,7 @@ const RowDetail: React.FC<RowDetailProps> = ({
                 item
                 key={"row_detail_property_" + detail.field + "_of_" + idx}
               >
-                {msgs[detail.field]} : {meta[detail.field]}
+                {msgs[detail.field]} : {String(meta[detail.field])}
               </Grid>
             );
         }
@@ -460,9 +454,10 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
   };
 
   const handleDelete = (target: Meta) => async () => {
-    const res = await deleteFile(target).catch((err) =>
-      handleErr((err as Response).message)
-    );
+    const res = await deleteFile(target).catch((err) => {
+      handleErr((err as Response).message);
+      return undefined;
+    });
 
     if (res) {
       handleSuc(res.message);
@@ -474,7 +469,6 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
   const handleChange =
     (meta: Meta) => (_: React.ChangeEvent<{}>, isExpanded: boolean) => {
       setExpanded(isExpanded ? "controll_of_" + meta.filename : "");
-      console.log("meta", meta)
       setModal(
         <DeleteModal meta={meta} handleDelete={handleDelete} exit={exit} />
       );
@@ -501,13 +495,16 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
         justifyContent={"flex-start"}
         css={full}
       >
-        {columns.map((column) => (
-          <Column
-            field={column.field}
-            width={column.width}
-            key={"column_property_" + column.field + "_main"}
-          />
-        ))}
+        {fields.map((column) =>
+          typeof column.width === "number" ? (
+            <Column
+              column={column as MetaDisplay & { width: number }}
+              key={"column_property_" + column.field + "_main"}
+            />
+          ) : (
+            <React.Fragment />
+          )
+        )}
       </Grid>
       {list.map((meta, idx) => (
         <Grid item css={full} key={"row_values_" + meta.filename + "_main"}>
@@ -536,20 +533,24 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
               aria-controls={"controll_row_of_" + meta.filename}
               id={"controll_row_of_" + meta.filename}
             >
-              {columns.map((column) => (
-                <RowHeader
-                  idx={idx}
-                  meta={meta}
-                  column={column}
-                  key={
-                    "table_value_" +
-                    meta.filename +
-                    "_" +
-                    column.field +
-                    "_main_"
-                  }
-                />
-              ))}
+              {fields.map((column) =>
+                typeof column.width === "number" ? (
+                  <RowHeader
+                    idx={idx}
+                    meta={meta}
+                    column={column as MetaDisplay & { width: number }}
+                    key={
+                      "table_value_" +
+                      meta.filename +
+                      "_" +
+                      column.field +
+                      "_main_"
+                    }
+                  />
+                ) : (
+                  <React.Fragment />
+                )
+              )}
             </Grid>
             <RowDetail
               idx={idx}
@@ -597,6 +598,7 @@ const Browse: React.FC = () => {
     updated_at: ["", ""],
     tags: [],
     author: "",
+    is_html_src_exists: null,
   });
 
   useEffect(() => {
@@ -604,14 +606,16 @@ const Browse: React.FC = () => {
       const res = await getDocumentsByFilter(requestOption).catch((err) => {
         handleErr((err as Response).message);
         setLoad(false);
+        return undefined;
       });
 
       if (res) {
         setResult(res);
         setLoad(true);
       }
-    })()
-  }, [load]);
+    })();
+    // eslint-disable-next-line
+  }, [load, requestOption]);
 
   return (
     <Grid
@@ -619,7 +623,7 @@ const Browse: React.FC = () => {
       direction={"column"}
       alignContent={"center"}
       css={css({
-        width: "100vw",
+        width: "100%",
       })}
     >
       <Controler

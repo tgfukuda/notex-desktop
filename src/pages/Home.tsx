@@ -1,13 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import React, { useState } from "react";
 import { Link, Route, useRouteMatch } from "react-router-dom";
-import {
-  Interpolation,
-  Theme,
-  css,
-  useTheme,
-  SerializedStyles,
-} from "@emotion/react";
+import { css, useTheme, SerializedStyles } from "@emotion/react";
 import { Button, Grid, Typography, Collapse } from "@mui/material";
 import { ArrowRightRounded, ArrowDropDownRounded } from "@mui/icons-material";
 
@@ -18,10 +12,6 @@ const full = css({
     verticalAlign: "middle",
     display: "block",
   },
-});
-
-const red = css({
-  color: "red",
 });
 
 type Props = {
@@ -83,18 +73,16 @@ const WelcomeToNoTeX: React.FC = () => {
       <Typography variant={"body1"} gutterBottom>
         Welcome to NoTeX. This App aims to create document interactivelly.
         <br />
-        NoTeX means "EXtended Note" and "Not only TeX". you can enjoy NoTeX
-        without instructions, but recommending read it a little for effetive
-        use.
-        <br />
-        That is because it's not a best option to everyone.
+        NoTeX enables you to write document with markdown and additional
+        extention. you can enjoy NoTeX without any instructions, but
+        recommending read it a little for effetive use.
       </Typography>
       <Typography variant={"h3"}>What is NoTeX?</Typography>
       <Typography variant={"body1"} gutterBottom>
         I always write document with thinking that structure and sometimes
         creating a pdf by LaTeX.
         <br />
-        It takes me some time and bothering me.
+        It takes me time and bothering me.
         <br />
         That is the reason why I develop NoTeX. You are now free of such pain.
       </Typography>
@@ -102,11 +90,49 @@ const WelcomeToNoTeX: React.FC = () => {
       <Typography variant={"body1"} component={"div"} gutterBottom>
         NoTeX enables you interactivelly to
         <ul>
-          <li>separate section and enumerate them</li>
-          <li>arrange word, such as coloring, bolding, ...etc</li>
-          <li>create a graph, list, table and arrange them</li>
           <li>
-            search your documents (created via NoTeX) by tags and update them
+            write{" "}
+            <a
+              href={"https://commonmark.org/help/"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              markdown
+            </a>{" "}
+            powered by
+            <a
+              href={"https://github.com/remarkjs/react-markdown"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              react-markdown
+            </a>
+          </li>
+          <li>
+            write LaTeX powered by{" "}
+            <a
+              href={"https://katex.org/docs/supported.html"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              KaTeX
+            </a>{" "}
+          </li>
+          <li>
+            write graph powered by{" "}
+            <a href={"https://d3js.org/"} target={"_blank"} rel={"noreferrer"}>
+              d3
+            </a>
+          </li>
+          <li>
+            write diagrams and visualizations powered by{" "}
+            <a
+              href={"https://mermaid-js.github.io/mermaid/#/"}
+              target={"_blank"}
+              rel={"noreferrer"}
+            >
+              mermaid
+            </a>
           </li>
         </ul>
       </Typography>
@@ -115,7 +141,7 @@ const WelcomeToNoTeX: React.FC = () => {
       </Typography>
       <Typography variant={"body2"} css={warning}>
         This App still being developped. above instructions can change in the
-        future and there are still some function not supported.
+        future.
       </Typography>
     </div>
   );
@@ -124,48 +150,6 @@ const WelcomeToNoTeX: React.FC = () => {
 const UsageOfWrite: React.FC = () => {
   return (
     <div>
-      <Typography variant={"h2"}>Usage: Write</Typography>
-      <Typography variant={"h3"}>File Attribute</Typography>
-      <Typography variant={"body1"} gutterBottom>
-        write something
-      </Typography>
-      <Typography variant={"h3"}>Section</Typography>
-      <Typography variant={"body1"} gutterBottom>
-        If you write down a new file, there will be a section which display
-        "title".
-        <span css={red}>Section</span> is a important concept. It means normally
-        "section", and can have sections, paragraphs, lists, tables, graphs as
-        children. Click the "Controller" being put on the left side. you will
-        see such orders. Additionally, you can see the "delete" button. That
-        executes a literally operation.
-      </Typography>
-      <Typography variant={"h3"}>Pragraph</Typography>
-      <Typography variant={"body1"} gutterBottom>
-        "Paragraph" is also significant. It can have one title (that can be
-        empty, but no more than two). If you want to write a word, you should
-        click "edit". Then, you will be able to edit that contents.
-        <br />
-        You can arrange words with separating them by "|", and click the your
-        aim.
-        <br />
-        You can write LaTeX statement with covering them by "\m (statement) \m".
-        "\m" means 'inline' Math mode and "\md" means 'display' Math mode.
-        <br />
-        Additionally, you can add link with markdown "\link[text](link)".
-        "\link" means link, [text] means displayed text, and (link) is actuall
-        link.
-        <br />
-        If you write "\link[bitcoin](https://bitcoin.org/bitcoin.pdf)", then it
-        will be compiled to{" "}
-        <a
-          href={"https://bitcoin.org/bitcoin.pdf"}
-          target={"_blank"}
-          rel={"noreferrer"}
-        >
-          bitcoin
-        </a>
-        .
-      </Typography>
       <Typography variant={"h3"}>Graph</Typography>
       <Typography variant={"body1"} component={"div"} gutterBottom>
         Graph is a optional component. If you write some mathematical article,
@@ -183,10 +167,6 @@ const UsageOfWrite: React.FC = () => {
           <li>and +, -, *, /, %, ^</li>
         </ul>
       </Typography>
-      <Typography variant={"h3"}>List, Table</Typography>
-      <Typography variant={"body1"} gutterBottom>
-        They are very simple to use, take it.
-      </Typography>
     </div>
   );
 };
@@ -196,7 +176,7 @@ const UsageOfBrowse: React.FC = () => {
     <div>
       <Typography variant={"h2"}>Usage: Browse</Typography>
       <Typography variant={"body1"} gutterBottom>
-        You can see the list of documents you have created with NoTeX. touch a
+        You can see the list of documents you have created with Notex. touch a
         file name, and select an operation among "view", "edit", "delete".
         <br />
         If your documents are too many and bother you, filter them by tags.
@@ -226,7 +206,7 @@ const Home: React.FC = () => {
       <Grid
         item
         css={css({
-          width: "15vw",
+          width: "15%",
           margin: theme.spacing(0.5),
           padding: theme.spacing(0),
           backgroundColor: "rgba(48, 48, 48, 0.05)",
@@ -251,7 +231,7 @@ const Home: React.FC = () => {
       <Grid
         item
         css={css({
-          width: "80vw",
+          width: "80%",
           margin: theme.spacing(0.5),
           padding: theme.spacing(0.5),
         })}
