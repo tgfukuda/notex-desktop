@@ -86,35 +86,9 @@ const Section: React.FC<SectionProps> = ({ level, children }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { addEl, removeEl } = useScroll();
   const sectionMsgs = sectionMsg(useSettings()["language"]);
-  const idx = crypto
-    .createHash("sha256")
-    .update(
-      String(children)
-        .toLowerCase()
-        .replaceAll(regex, (match) => {
-          switch (match) {
-            case " ":
-              return "-";
-            default:
-              return "";
-          }
-        }),
-      "utf8"
-    )
-    .digest("hex");
-
-  useEffect(() => {
-    addEl(idx, ref);
-
-    return () => {
-      removeEl(idx);
-    };
-    //eslint-disable-next-line
-  }, []);
 
   return (
     <Typography
-      id={idx}
       variant={("h" + Math.min(6, level + 2)) as Variant}
       ref={ref}
       css={css({
@@ -500,32 +474,6 @@ const Markdown: React.FC<MarkdownProps> = ({ md, container }) => {
         tr: TableRow,
         th: TableCell,
         td: TableCell,
-        a: ({ node, href, children, ...props }) => {
-          if (href && href[0] === "#") {
-            return (
-              <a
-                {...props}
-                onClick={(e) => {
-                  e.preventDefault();
-                  pickEl(
-                    crypto
-                      .createHash("sha256")
-                      .update(href.slice(1), "utf8")
-                      .digest("hex")
-                  );
-                }}
-              >
-                {children}
-              </a>
-            );
-          } else {
-            return (
-              <a href={href} {...props}>
-                {children}
-              </a>
-            );
-          }
-        },
         img: ({ alt, ...props }) => (
           <img
             {...props}
@@ -611,7 +559,8 @@ const ControlSpan: React.FC<ControlSpanProps> = ({
   forceUpdateCaret,
 }) => {
   const dispatch = useAppDispatch();
-  const { ref, handleKeyDown, handleKeyUp } = useKeyAction<HTMLSpanElement>(
+  const ref = useRef<HTMLSpanElement>(null);
+  const { handleKeyDown, handleKeyUp } = useKeyAction(
     (keyboard, e) => {
       console.log(e.key, "keydown");
       if (keyboard["Enter"]) {
@@ -654,8 +603,7 @@ const ControlSpan: React.FC<ControlSpanProps> = ({
         forceUpdateCaret(idx, line, pos + 1);
       }
     },
-    (keyboard, e) => {
-    }
+    (keyboard, e) => {}
   );
 
   useEffect(() => {
@@ -664,8 +612,8 @@ const ControlSpan: React.FC<ControlSpanProps> = ({
 
   return pos === caret?.pos ? (
     <span
-      ref={ref}
       contentEditable
+      ref={ref}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
       css={css`
@@ -731,19 +679,26 @@ const ControlDiv: React.FC<ControlDivProps> = ({ idx, line, str, endLine }) => {
  * handle split with paragraph's blur
  */
 const MarkdownWrapper: React.FC<{ idx: number; dom: DOM }> = ({ idx, dom }) => {
-  const { innerCaret, getCaret, updateCaretGenerator, forceUpdateCaretGenerator } = useContext(CaretControlContext);
+  const {
+    innerCaret,
+    getCaret,
+    updateCaretGenerator,
+    forceUpdateCaretGenerator,
+  } = useContext(CaretControlContext);
   const lines = dom.value.split("\n");
   const endLine = lines.length;
-  const line = 0 < innerCaret.line
-  ? Math.min(innerCaret.line, endLine) % (endLine + 1)
-  : (Math.max(innerCaret.line, -1 * endLine) % (endLine + 1)) + endLine;
-  const chars = lines[line - 1] ? lines[line - 1].split("") : []
-  const caret = getCaret(endLine, chars.length + 1)
+  const line =
+    0 < innerCaret.line
+      ? Math.min(innerCaret.line, endLine) % (endLine + 1)
+      : (Math.max(innerCaret.line, -1 * endLine) % (endLine + 1)) + endLine;
+  const chars = lines[line - 1] ? lines[line - 1].split("") : [];
+  const caret = getCaret(endLine, chars.length + 1);
   const pos = caret.pos;
   const dispatch = useAppDispatch();
-  const updateCaret = updateCaretGenerator(endLine, chars.length + 1)
-  const forceUpdateCaret = forceUpdateCaretGenerator(endLine, chars.length + 1)
-  const { ref, handleKeyDown, handleKeyUp } = useKeyAction<HTMLSpanElement>(
+  const updateCaret = updateCaretGenerator(endLine, chars.length + 1);
+  const forceUpdateCaret = forceUpdateCaretGenerator(endLine, chars.length + 1);
+  const ref = useRef<HTMLDivElement>(null);
+  const { handleKeyDown, handleKeyUp } = useKeyAction(
     (keyboard, e) => {
       e.preventDefault();
       if (keyboard["Enter"]) {
@@ -783,12 +738,12 @@ const MarkdownWrapper: React.FC<{ idx: number; dom: DOM }> = ({ idx, dom }) => {
       }
     },
     (keyboard, e) => {
-      console.log("keyup")
+      console.log("keyup");
     }
   );
   useEffect(() => {
-    console.log("lines", lines, " - line: ", line)
-    console.log("chars", chars, " - pos: ", pos)
+    console.log("lines", lines, " - line: ", line);
+    console.log("chars", chars, " - pos: ", pos);
     if (ref.current) ref.current.focus();
   });
 
@@ -821,12 +776,12 @@ const CaretControlContext = createContext<ReturnType<typeof useCaretControl>>({
   innerCaret: {
     idx: -1,
     line: 0,
-    pos: 0
+    pos: 0,
   },
   getCaret: () => ({
     idx: -1,
     line: 0,
-    pos: 0
+    pos: 0,
   }),
   updateCaretGenerator: () => () => {},
   forceUpdateCaretGenerator: () => () => {},
@@ -846,7 +801,8 @@ const useCaret = (lineMax: number, posMax: number) => {
 const Editable: React.FC = () => {
   const dispatch = useAppDispatch();
   const doms = useWrite().doms;
-  const { ref, handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const { handleKeyDown, handleKeyUp } = useKeyAction((keyboard, e) => {
     if (keyboard["Enter"]) {
       e.preventDefault();
       dispatch(

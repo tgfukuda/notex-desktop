@@ -27,7 +27,7 @@ const Footer: React.FC<{ online?: boolean }> = ({ online = false }) => {
       >
         <Grid item>
           <a
-            href={"https://github.com/FukudaTaiga"}
+            href={"https://github.com/tgfukuda"}
             target={"_blank"}
             rel={"noreferrer"}
           >

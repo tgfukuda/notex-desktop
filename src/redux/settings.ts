@@ -5,8 +5,10 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
  * then, only type required
  */
 
+type Command = "save" | "insertImage" | "syncDoc"
+
 type KeyBindings = {
-  [command: string]: string;
+  [command in Command]?: string;
 };
 
 export const languages = ["japanese", "english"] as const;
@@ -20,7 +22,6 @@ export type SettingType = {
   language: Language;
   autosave: number | null;
   key_bindings: KeyBindings;
-  is_new: boolean;
 };
 
 const initialState: SettingType = {
@@ -31,7 +32,6 @@ const initialState: SettingType = {
   language: "english",
   autosave: null,
   key_bindings: {},
-  is_new: true,
 };
 
 const settingsSlice = createSlice({
@@ -53,7 +53,7 @@ const settingsSlice = createSlice({
     updateKeyBindings(
       state,
       action: PayloadAction<{
-        key: number;
+        key: Command;
         value: string;
       }>
     ) {
@@ -62,7 +62,7 @@ const settingsSlice = createSlice({
     deleteKeyBindings(
       state,
       action: PayloadAction<{
-        key: number;
+        key: Command;
       }>
     ) {
       state.key_bindings[action.payload.key] = "";

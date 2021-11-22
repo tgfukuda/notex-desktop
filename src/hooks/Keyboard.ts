@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 
 /**
  * this module provides key action handler.
@@ -116,16 +116,11 @@ export const useCaretControl = () => {
  * more specific typing is hopeful.
  */
 export type KeyBoard = { [key: string]: boolean | undefined };
-const useKeyAction = <T extends HTMLElement = HTMLDivElement>(
+const useKeyAction = (
   onKeyDown: (keyboard: KeyBoard, e: React.KeyboardEvent<unknown>) => void,
   onKeyUp?: (keybord: KeyBoard, e: React.KeyboardEvent<unknown>) => void
 ) => {
   const [keyboard, setKeyboard] = useState<KeyBoard>({});
-
-  /**
-   * pass the reference to the component to handle keyboard event.
-   */
-  const ref: React.RefObject<T> = useRef(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<unknown>) => {
     const next = {
@@ -147,7 +142,6 @@ const useKeyAction = <T extends HTMLElement = HTMLDivElement>(
   const resetKeyBoard = () => setKeyboard({});
 
   return {
-    ref,
     handleKeyDown,
     handleKeyUp,
     resetKeyBoard,

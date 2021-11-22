@@ -22,6 +22,7 @@ export type Meta = {
   author: string;
   tags: string[];
   shortcut: { [command: string]: string };
+  html_src: boolean;
 };
 
 const initialState: Document = {

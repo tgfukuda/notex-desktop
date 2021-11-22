@@ -25,4 +25,4 @@ yarn-error.log*
 
 yarn.lock
 package-lock.json
-src-tauri/Cargo.toml
+src-tauri/Cargo.lock

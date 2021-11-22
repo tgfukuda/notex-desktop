@@ -1,6 +1,6 @@
 import React from "react";
 
-type ElementList = {
+type ScrollTargets = {
   [idx: string]: HTMLElement;
 };
 
@@ -17,11 +17,11 @@ type ElementList = {
  * for the above reasons, this architechture can be something wrong.
  * what is the best practice? this abstraction can't?
  */
-var elements: ElementList = {};
+var scrollTargets: ScrollTargets = {};
 const useScroll = (container?: HTMLElement) => {
   const addEl = (idx: string, ref: React.RefObject<HTMLElement>) => {
     if (ref.current) {
-      elements[idx] = ref.current;
+      scrollTargets[idx] = ref.current;
     }
   };
   const pickEl = (idx: string) => {
@@ -29,14 +29,13 @@ const useScroll = (container?: HTMLElement) => {
     const targetY =
       container?.getBoundingClientRect().top || window.scrollY * -1;
 
-    target.scrollTo({
-      top: elements[idx]?.getBoundingClientRect().top - targetY - 5,  //extra 5px
-      left: 0,
-      behavior: "smooth",
-    });
+    target.scrollTo(
+      0,
+      scrollTargets[idx]?.getBoundingClientRect().top - targetY - 5
+    );
   };
   const removeEl = (idx: string) => {
-    delete elements[idx];
+    delete scrollTargets[idx];
   };
 
   return {

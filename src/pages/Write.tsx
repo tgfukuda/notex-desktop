@@ -1,7 +1,9 @@
 /** @jsxImportSource @emotion/react */
 import React, {
   ChangeEvent,
+  forwardRef,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useReducer,
   useRef,
@@ -57,20 +59,20 @@ const scrollable = css`
   }
 `;
 
-const useInputControll = (handleBlobUrl: (url: string) => void) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+const useFileControll = (handleBlobUrl: (url: string) => void) => {
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const reader = new FileReader();
   reader.onload = (e: ProgressEvent<FileReader>) => {
     if (e.target && typeof e.target.result === "string")
       handleBlobUrl(e.target.result);
   };
   const handleChange = (_: ChangeEvent) => {
-    if (inputRef.current && inputRef.current.files?.length)
-      reader.readAsDataURL(inputRef.current.files[0]);
+    if (fileRef.current && fileRef.current.files?.length)
+      reader.readAsDataURL(fileRef.current.files[0]);
   };
 
   return {
-    inputRef,
+    fileRef,
     handleChange,
   };
 };
@@ -170,7 +172,7 @@ const Controler: React.FC<ControlerProps> = ({
   const handleTag = () => {
     if (tagState.idx === -1 && tagState.label !== "") {
       dispatchMeta({
-        type: "tag",
+        type: "tags",
         payload: [...meta.tags, tagState.label],
       });
       dispatchTagState({
@@ -178,7 +180,7 @@ const Controler: React.FC<ControlerProps> = ({
       });
     } else if (tagState.label !== "") {
       dispatchMeta({
-        type: "tag",
+        type: "tags",
         payload: [
           ...meta.tags.slice(0, tagState.idx),
           tagState.label,
@@ -202,7 +204,7 @@ const Controler: React.FC<ControlerProps> = ({
   );
 
   const handleStop = (e: React.MouseEvent) => e.stopPropagation();
-  const { inputRef, handleChange } = useInputControll(handleImageUrl);
+  const { fileRef, handleChange } = useFileControll(handleImageUrl);
 
   return (
     <>
@@ -211,7 +213,7 @@ const Controler: React.FC<ControlerProps> = ({
           <MoreVertIcon />
         </Button>
         <Button
-          onClick={() => inputRef.current?.click()}
+          onClick={() => fileRef.current?.click()}
           css={buttonIconDefault}
         >
           <ImageIcon />
@@ -254,7 +256,7 @@ const Controler: React.FC<ControlerProps> = ({
         <input
           type={"file"}
           accept={".png,.jpg,.jpeg,.gif"}
-          ref={inputRef}
+          ref={fileRef}
           onChange={handleChange}
           css={css({
             display: "none",
@@ -367,7 +369,7 @@ const Controler: React.FC<ControlerProps> = ({
                         }}
                         onDelete={() =>
                           dispatchMeta({
-                            type: "tag",
+                            type: "tags",
                             payload: [
                               ...meta.tags.slice(0, idx),
                               ...meta.tags.slice(idx + 1),
@@ -418,18 +420,44 @@ type RawInputProps = {
   raw: string;
   handleRaw: (arg: string) => void;
 };
-const RawInput: React.FC<RawInputProps> = ({ raw, handleRaw }) => {
+type RawInputHandle = {
+  selectionEnd: () => number | null | undefined;
+};
+const RawInputBase: React.ForwardRefRenderFunction<
+  RawInputHandle,
+  RawInputProps
+> = ({ raw, handleRaw }, forwardedRef) => {
   const theme = useTheme();
-  const { ref, handleKeyDown, handleKeyUp, resetKeyBoard } = useKeyAction(
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [selection, setSelection] = useState({
+    start: 0,
+    end: 0
+  })
+  useImperativeHandle(forwardedRef, () => ({
+    selectionEnd: () => inputRef.current?.selectionEnd,
+  }));
+  const { handleKeyDown, handleKeyUp, resetKeyBoard } = useKeyAction(
     (keyboard, e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        resetKeyBoard();
-        handleRaw(raw + "  ");
+      if (keyboard["Tab"]) {
+        if (inputRef.current && inputRef.current.selectionEnd !== null) {
+          e.preventDefault();
+          resetKeyBoard();
+          const caretpos = inputRef.current.selectionEnd || raw.length;
+          handleRaw(`${raw.slice(0, caretpos)}${"  "}${raw.slice(caretpos)}`);
+          inputRef.current.selectionStart = inputRef.current.selectionEnd =
+            caretpos + 2;
+          console.log(caretpos)
+        }
       }
     }
   );
-  const handleClick = () => ref.current?.focus();
+  const handleClick = () => inputRef.current?.focus();
+
+  useEffect(() => {
+    if (inputRef.current && inputRef.current === document.activeElement) {
+      
+    }
+  })
 
   return (
     <Grid
@@ -456,11 +484,12 @@ const RawInput: React.FC<RawInputProps> = ({ raw, handleRaw }) => {
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         onChange={(e) => handleRaw(e.target.value)}
-        inputRef={ref}
+        inputRef={inputRef}
       />
     </Grid>
   );
 };
+const RawInput = forwardRef(RawInputBase);
 
 const Preview: React.FC<{
   data: Data;
@@ -473,17 +502,17 @@ const Preview: React.FC<{
 
   useEffect(() => {
     if (data.load === ShouldUpdate.USERIN) {
-      if (timer.current) clearTimeout(timer.current);
+      if (timer.current !== null) clearTimeout(timer.current);
       timer.current = window.setTimeout(
         () => {
           timer.current = null;
           setLoad(ShouldUpdate.DONE);
         },
-        sync ? 1500 : 10
+        sync ? 1500 : 100 //too short interval results in no effect?
       );
     }
     setLoad(ShouldUpdate.WAIT);
-  }, [data.load, setLoad, sync]);
+  });
 
   return (
     <Grid
@@ -520,7 +549,7 @@ type MetaUpdateAction =
       payload: Meta["author"];
     }
   | {
-      type: "tag";
+      type: "tags";
       payload: Meta["tags"];
     }
   | {
@@ -539,16 +568,22 @@ const Edit: React.FC = () => {
   const theme = useTheme();
   const location = useLocation<Meta>();
   const [raw, setRaw] = useState("");
+  const rawInputRef = useRef<RawInputHandle>(null);
   const [load, setLoad] = useState<ShouldUpdate>(ShouldUpdate.DONE);
   const overwrite = useRef(false);
-  const [sync, setSync] = useState(true);
+  const [sync, setSync] = useState(false);
   const handleSync = () => setLoad(ShouldUpdate.USERIN);
   const handleRaw = (arg: string) => {
     setRaw(arg);
     if (sync) handleSync();
   };
   const handleImageUrl = (url: string) => {
-    setRaw(raw + `\n![may not be image](${url})`);
+    const caretpos = rawInputRef.current?.selectionEnd() || raw.length;
+    setRaw(
+      `${raw.slice(0, caretpos)}![may not be image](${url})${raw.slice(
+        caretpos
+      )}`
+    );
     handleSync();
   };
   const [meta, dispatchMeta] = useReducer(
@@ -566,7 +601,7 @@ const Edit: React.FC = () => {
             ...state,
             author: action.payload,
           };
-        case "tag":
+        case "tags":
           return {
             ...state,
             tags: [...new Set(action.payload)],
@@ -587,6 +622,7 @@ const Edit: React.FC = () => {
       author: "",
       tags: [],
       shortcut: {},
+      html_src: false,
     }
   );
   const { handleSuc, handleErr } = useSnackHandler();
@@ -642,15 +678,15 @@ const Edit: React.FC = () => {
           return undefined;
         });
 
-        if (body) {
+        if (body !== undefined) {
           setRaw(body);
           dispatchMeta({
             type: "set",
             payload: location.state,
           });
           overwrite.current = true;
-          setLoad(ShouldUpdate.USERIN);
         }
+        handleSync();
       })();
     }
 
@@ -687,7 +723,7 @@ const Edit: React.FC = () => {
         setSync={setSync}
         handleSync={handleSync}
       />
-      <RawInput raw={raw} handleRaw={handleRaw} />
+      <RawInput raw={raw} handleRaw={handleRaw} ref={rawInputRef} />
       <Preview data={{ raw, load }} setLoad={setLoad} sync={sync} />
     </Grid>
   );

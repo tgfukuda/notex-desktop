@@ -13,6 +13,8 @@ pub struct Meta {
   author: String,
   tags: Vec<Tag>,
   shortcut: HashMap<String, String>,
+  #[serde(default)]
+  html_src: bool
 }
 impl Meta {
   pub fn get_hashed_filename(&self) -> String {
@@ -38,6 +40,10 @@ impl Meta {
     } else {
       self.updated_at = Some(Local::now().format(TIME_FORMAT).to_string());
     }
+  }
+
+  pub fn set_html_src(&mut self) {
+    self.html_src = true;
   }
 
   pub fn filter_by_filename(&self, start: &str, contain: &str) -> bool {
@@ -90,11 +96,19 @@ impl Meta {
       intersection.next().is_some()
     }
   }
+
   pub fn filter_by_author(&self, author: &str) -> bool {
     if author.len() == 0 {
       true
     } else {
       &self.author == author
+    }
+  }
+
+  pub fn filter_by_html_src(&self, is_html_src_exists: Option<bool>) -> bool {
+    match is_html_src_exists {
+      None => true,
+      Some(b) => self.html_src == b
     }
   }
 }
@@ -124,6 +138,7 @@ pub mod tests {
           author: String::from("me"),
           tags: vec![String::from("t1"), String::from("t2"), String::from("t3")],
           shortcut: HashMap::new(),
+          html_src: false
         },
       }
     }
@@ -152,7 +167,8 @@ pub mod tests {
           \"updated_at\":{},\
           \"author\":\"{}\",\
           \"tags\":[{}],\
-          \"shortcut\":{{{}}}\
+          \"shortcut\":{{{}}},\
+          \"html_src\":{}\
         }}",
         meta.filename,
         meta.created_at,
@@ -174,7 +190,8 @@ pub mod tests {
             acc
           });
           String::from(&fmt[..if fmt.len() > 0 { fmt.len() - 1 } else { 0 }])
-        }
+        },
+        meta.html_src
       )
     }
   }

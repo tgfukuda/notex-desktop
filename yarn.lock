@@ -1964,6 +1964,11 @@
   "resolved" "https://registry.npmjs.org/@types/aria-query/-/aria-query-4.2.2.tgz"
   "version" "4.2.2"
 
+"@types/assert@^1.4.6":
+  "integrity" "sha512-Y7gDJiIqb9qKUHfBQYOWGngUpLORtirAVPuj/CWJrU2C6ZM4/y3XLwuwfGMF8s7QzW746LQZx23m0+1FSgjfug=="
+  "resolved" "https://registry.npmjs.org/@types/assert/-/assert-1.5.6.tgz"
+  "version" "1.5.6"
+
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.7":
   "integrity" "sha512-wMTHiiTiBAAPebqaPiPDLFA4LYPKr6Ph0Xq/6rq1Ur3v66HXyG+clfR9CNETkD7MQS8ZHvpQOtA53DLws5WAEQ=="
   "resolved" "https://registry.npmjs.org/@types/babel__core/-/babel__core-7.1.12.tgz"
@@ -3910,6 +3915,13 @@
     "base64-js" "^1.3.1"
     "ieee754" "^1.1.13"
 
+"built-in-math-eval@^0.3.0":
+  "integrity" "sha1-JA3CHLOJQ5WIxhxGDrAHZJfvxBw="
+  "resolved" "https://registry.npmjs.org/built-in-math-eval/-/built-in-math-eval-0.3.0.tgz"
+  "version" "0.3.0"
+  dependencies:
+    "math-codegen" "^0.3.5"
+
 "builtin-modules@^3.1.0":
   "integrity" "sha512-lGzLKcioL90C7wMczpkY0n/oART3MbBa8R9OFGE1rJxoVI86u4WAGfEk8Wjv10eKSyTHVGkSo3bvBylCEtk7LA=="
   "resolved" "https://registry.npmjs.org/builtin-modules/-/builtin-modules-3.2.0.tgz"
@@ -4365,6 +4377,11 @@
   "integrity" "sha512-uc2Vix1frTfnuzxxu1Hp4ktSvM3QaI4oXl4ZUqL1wjTu/BGki9TrCWoqLTg/drR1KwAEarXuRFCG2Svr1GxPFw=="
   "resolved" "https://registry.npmjs.org/cjs-module-lexer/-/cjs-module-lexer-0.6.0.tgz"
   "version" "0.6.0"
+
+"clamp@^1.0.1":
+  "integrity" "sha1-ZqDmQBGBbjcZaCj9yMjBRzEshjQ="
+  "resolved" "https://registry.npmjs.org/clamp/-/clamp-1.0.1.tgz"
+  "version" "1.0.1"
 
 "class-utils@^0.3.5":
   "integrity" "sha512-qOhPa/Fj7s6TY8H8esGu5QNpMMQxz79h+urzrNYN6mn+9BnxlDGf5QZ+XeCDsxSjPqsSR56XOZOJmpeurnLMeg=="
@@ -5158,12 +5175,24 @@
   "resolved" "https://registry.npmjs.org/d3-array/-/d3-array-1.2.4.tgz"
   "version" "1.2.4"
 
+"d3-array@^2.3.0", "d3-array@2":
+  "integrity" "sha512-B0ErZK/66mHtEsR1TkPEEkwdy+WDesimkM5gpZr5Dsg54BiTA5RXtYW5qTLIAcekaS9xfZrzBLF/OAkB3Qn1YQ=="
+  "resolved" "https://registry.npmjs.org/d3-array/-/d3-array-2.12.1.tgz"
+  "version" "2.12.1"
+  dependencies:
+    "internmap" "^1.0.0"
+
 "d3-array@2 - 3", "d3-array@2.10.0 - 3", "d3-array@2.5.0 - 3", "d3-array@3":
   "integrity" "sha512-33qQ+ZoZlli19IFiQx4QEpf2CBEayMRzhlisJHSCsSUbDXv6ZishqS1x7uFVClKG4Wr7rZVHvaAttoLow6GqdQ=="
   "resolved" "https://registry.npmjs.org/d3-array/-/d3-array-3.1.1.tgz"
   "version" "3.1.1"
   dependencies:
     "internmap" "1 - 2"
+
+"d3-axis@^2.0.0":
+  "integrity" "sha512-z/G2TQMyuf0X3qP+Mh+2PimoJD41VOCjViJzT0BHeL/+JQAofkiWZbWxlwFGb1N8EN+Cl/CW+MUKbVzr1689Cw=="
+  "resolved" "https://registry.npmjs.org/d3-axis/-/d3-axis-2.1.0.tgz"
+  "version" "2.1.0"
 
 "d3-axis@1":
   "integrity" "sha512-ejINPfPSNdGFKEOAtnBtdkpr24c4d4jsei6Lg98mxf424ivoDP2956/5HDpIAtmHo85lqT4pruy+zEgvRUBqaQ=="
@@ -5217,6 +5246,11 @@
   "resolved" "https://registry.npmjs.org/d3-collection/-/d3-collection-1.0.7.tgz"
   "version" "1.0.7"
 
+"d3-color@^2.0.0", "d3-color@1 - 2":
+  "integrity" "sha512-SPXi0TSKPD4g9tw0NMZFnR95XVgUZiBH+uUTqQuDu1OsE2zomHU7ho0FISciaPvosimixwHFl3WHLGabv6dDgQ=="
+  "resolved" "https://registry.npmjs.org/d3-color/-/d3-color-2.0.0.tgz"
+  "version" "2.0.0"
+
 "d3-color@1 - 3", "d3-color@3":
   "integrity" "sha512-6/SlHkDOBLyQSJ1j1Ghs82OIUXpKWlR0hCsw0XrLSQhuUPuCSmLQ1QPH98vpnQxMUQM2/gfAkUEWsupVpd9JGw=="
   "resolved" "https://registry.npmjs.org/d3-color/-/d3-color-3.0.1.tgz"
@@ -5248,6 +5282,11 @@
   dependencies:
     "delaunator" "5"
 
+"d3-dispatch@1 - 2":
+  "integrity" "sha512-S/m2VsXI7gAti2pBoLClFFTMOO1HTtT0j99AuXLoGFKO6deHDdnv6ZGTxSTTUTgO1zVcv82fCOtDjYK4EECmWA=="
+  "resolved" "https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-2.0.0.tgz"
+  "version" "2.0.0"
+
 "d3-dispatch@1 - 3", "d3-dispatch@3":
   "integrity" "sha512-rzUyPU/S7rwUflMyLc1ETDeBj0NRuHKKAcvukozwhshr6g6c5d8zh4c2gQjY2bZ0dXeGLWc1PF174P2tVvKhfg=="
   "resolved" "https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz"
@@ -5274,6 +5313,14 @@
     "d3-dispatch" "1 - 3"
     "d3-selection" "3"
 
+"d3-drag@2":
+  "integrity" "sha512-g9y9WbMnF5uqB9qKqwIIa/921RYWzlUDv9Jl1/yONQwxbOfszAWTCm8u7HOTgJgRDXiRZN56cHT9pd24dmXs8w=="
+  "resolved" "https://registry.npmjs.org/d3-drag/-/d3-drag-2.0.0.tgz"
+  "version" "2.0.0"
+  dependencies:
+    "d3-dispatch" "1 - 2"
+    "d3-selection" "2"
+
 "d3-dsv@1 - 3", "d3-dsv@3":
   "integrity" "sha512-UG6OvdI5afDIFP9w4G0mNq50dSOsXHJaRE8arAS5o9ApWnIElp8GZw1Dun8vP8OyHOZ/QJUKUJwxiiCCnUwm+Q=="
   "resolved" "https://registry.npmjs.org/d3-dsv/-/d3-dsv-3.0.1.tgz"
@@ -5291,6 +5338,11 @@
     "commander" "2"
     "iconv-lite" "0.4"
     "rw" "1"
+
+"d3-ease@1 - 2":
+  "integrity" "sha512-68/n9JWarxXkOWMshcT5IcjbB+agblQUaIsbnXmrzejn2O82n3p2A9R2zEB9HIEFWKFwPAEDDN8gR0VdSAyyAQ=="
+  "resolved" "https://registry.npmjs.org/d3-ease/-/d3-ease-2.0.0.tgz"
+  "version" "2.0.0"
 
 "d3-ease@1 - 3", "d3-ease@3":
   "integrity" "sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w=="
@@ -5335,6 +5387,11 @@
     "d3-quadtree" "1 - 3"
     "d3-timer" "1 - 3"
 
+"d3-format@^2.0.0", "d3-format@1 - 2":
+  "integrity" "sha512-Ab3S6XuE/Q+flY96HXT0jOXcM4EAClYFnRGY5zsjRGNy6qCYrQsMffs7cV5Q9xejb35zxW5hf/guKw34kvIKsA=="
+  "resolved" "https://registry.npmjs.org/d3-format/-/d3-format-2.0.0.tgz"
+  "version" "2.0.0"
+
 "d3-format@1 - 3", "d3-format@3":
   "integrity" "sha512-hdL7+HBIohpgfolhBxr1KX47VMD6+vVD/oEFrxk5yhmzV2prk99EkFKYpXuhVkFpTgHdJ6/4bYcjdLPPXV4tIA=="
   "resolved" "https://registry.npmjs.org/d3-format/-/d3-format-3.0.1.tgz"
@@ -5369,6 +5426,13 @@
   "resolved" "https://registry.npmjs.org/d3-hierarchy/-/d3-hierarchy-3.0.1.tgz"
   "version" "3.0.1"
 
+"d3-interpolate@^2.0.1", "d3-interpolate@1 - 2", "d3-interpolate@1.2.0 - 2":
+  "integrity" "sha512-c5UhwwTs/yybcmTpAVqwSFl6vrQ8JZJoT5F7xNFK9pymv5C0Ymcc9/LIJHtYIggg/yS9YHw8i8O8tgb9pupjeQ=="
+  "resolved" "https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-2.0.1.tgz"
+  "version" "2.0.1"
+  dependencies:
+    "d3-color" "1 - 2"
+
 "d3-interpolate@1 - 3", "d3-interpolate@1.2.0 - 3", "d3-interpolate@3":
   "integrity" "sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g=="
   "resolved" "https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz"
@@ -5382,6 +5446,11 @@
   "version" "1.4.0"
   dependencies:
     "d3-color" "1"
+
+"d3-path@1 - 2":
+  "integrity" "sha512-ZwZQxKhBnv9yHaiWd6ZU4x5BtCQ7pXszEV9CU6kRgwIQVQGLMv1oiL4M+MK/n79sYzsj+gcgpPQSctJUsLN7fA=="
+  "resolved" "https://registry.npmjs.org/d3-path/-/d3-path-2.0.0.tgz"
+  "version" "2.0.0"
 
 "d3-path@1 - 3", "d3-path@3":
   "integrity" "sha512-gq6gZom9AFZby0YLduxT1qmrp4xpBA1YZr19OI717WIdKE2OM5ETq5qrHLb301IgxhLwcuxvGZVLeeWc/k1I6w=="
@@ -5439,6 +5508,17 @@
     "d3-color" "1 - 3"
     "d3-interpolate" "1 - 3"
 
+"d3-scale@^3.2.2":
+  "integrity" "sha512-1JGp44NQCt5d1g+Yy+GeOnZP7xHo0ii8zsQp6PGzd+C1/dl0KGsp9A7Mxwp+1D1o4unbTTxVdU/ZOIEBoeZPbQ=="
+  "resolved" "https://registry.npmjs.org/d3-scale/-/d3-scale-3.3.0.tgz"
+  "version" "3.3.0"
+  dependencies:
+    "d3-array" "^2.3.0"
+    "d3-format" "1 - 2"
+    "d3-interpolate" "1.2.0 - 2"
+    "d3-time" "^2.1.1"
+    "d3-time-format" "2 - 3"
+
 "d3-scale@2":
   "integrity" "sha512-LbeEvGgIb8UMcAa0EATLNX0lelKWGYDQiPdHj+gLblGVhGLyNbaCn3EvrJf0A3Y/uOOU5aD6MTh5ZFCdEwGiCw=="
   "resolved" "https://registry.npmjs.org/d3-scale/-/d3-scale-2.2.2.tgz"
@@ -5467,10 +5547,22 @@
   "resolved" "https://registry.npmjs.org/d3-selection/-/d3-selection-1.4.2.tgz"
   "version" "1.4.2"
 
+"d3-selection@^2.0.0", "d3-selection@2":
+  "integrity" "sha512-XoGGqhLUN/W14NmaqcO/bb1nqjDAw5WtSYb2X8wiuQWvSZUsUVYsOSkOybUrNvcBjaywBdYPy03eXHMXjk9nZA=="
+  "resolved" "https://registry.npmjs.org/d3-selection/-/d3-selection-2.0.0.tgz"
+  "version" "2.0.0"
+
 "d3-selection@2 - 3", "d3-selection@3":
   "integrity" "sha512-fmTRWbNMmsmWq6xJV8D19U/gw/bwrHfNXxrIN+HfZgnzqTHp9jOmKMhsTUjXOJnZOdZY9Q28y4yebKzqDKlxlQ=="
   "resolved" "https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz"
   "version" "3.0.0"
+
+"d3-shape@^2.0.0":
+  "integrity" "sha512-PnjUqfM2PpskbSLTJvAzp2Wv4CZsnAgTfcVRTwW03QR3MkXF8Uo7B1y/lWkAsmbKwuecto++4NlsYcvYpXpTHA=="
+  "resolved" "https://registry.npmjs.org/d3-shape/-/d3-shape-2.1.0.tgz"
+  "version" "2.1.0"
+  dependencies:
+    "d3-path" "1 - 2"
 
 "d3-shape@1":
   "integrity" "sha512-EUkvKjqPFUAZyOlhY5gzCxCeI0Aep04LwIRpsZ/mLFelJiUfnK56jo5JMDSE7yyP2kLSb6LtF+S5chMk7uqPqw=="
@@ -5486,6 +5578,13 @@
   dependencies:
     "d3-path" "1 - 3"
 
+"d3-time-format@2 - 3":
+  "integrity" "sha512-UXJh6EKsHBTjopVqZBhFysQcoXSv/5yLONZvkQ5Kk3qbwiUYkdX17Xa1PT6U1ZWXGGfB1ey5L8dKMlFq2DO0Ag=="
+  "resolved" "https://registry.npmjs.org/d3-time-format/-/d3-time-format-3.0.0.tgz"
+  "version" "3.0.0"
+  dependencies:
+    "d3-time" "1 - 2"
+
 "d3-time-format@2 - 4", "d3-time-format@4":
   "integrity" "sha512-nzaCwlj+ZVBIlFuVOT1RmU+6xb/7D5IcnhHzHQcBgS/aTa5K9fWZNN5LCXA27LgF5WxoSNJqKBbLcGMtM6Ca6A=="
   "resolved" "https://registry.npmjs.org/d3-time-format/-/d3-time-format-4.0.0.tgz"
@@ -5500,6 +5599,13 @@
   dependencies:
     "d3-time" "1"
 
+"d3-time@^2.1.1", "d3-time@1 - 2":
+  "integrity" "sha512-/eIQe/eR4kCQwq7yxi7z4c6qEXf2IYGcjoWB5OOQy4Tq9Uv39/947qlDcN2TLkiTzQWzvnsuYPB9TrWaNfipKQ=="
+  "resolved" "https://registry.npmjs.org/d3-time/-/d3-time-2.1.1.tgz"
+  "version" "2.1.1"
+  dependencies:
+    "d3-array" "2"
+
 "d3-time@1 - 3", "d3-time@2.1.1 - 3", "d3-time@3":
   "integrity" "sha512-zmV3lRnlaLI08y9IMRXSDshQb5Nj77smnfpnd2LrBa/2K281Jijactokeak14QacHs/kKq0AQ121nidNYlarbQ=="
   "resolved" "https://registry.npmjs.org/d3-time/-/d3-time-3.0.0.tgz"
@@ -5511,6 +5617,11 @@
   "integrity" "sha512-Xh0isrZ5rPYYdqhAVk8VLnMEidhz5aP7htAADH6MfzgmmicPkTo8LhkLxci61/lCB7n7UmE3bN0leRt+qvkLxA=="
   "resolved" "https://registry.npmjs.org/d3-time/-/d3-time-1.1.0.tgz"
   "version" "1.1.0"
+
+"d3-timer@1 - 2":
+  "integrity" "sha512-TO4VLh0/420Y/9dO3+f9abDEFYeCUr2WZRlxJvbp4HPTQcSylXNiL6yZa9FIUvV1yRiFufl1bszTCLDqv9PWNA=="
+  "resolved" "https://registry.npmjs.org/d3-timer/-/d3-timer-2.0.0.tgz"
+  "version" "2.0.0"
 
 "d3-timer@1 - 3", "d3-timer@3":
   "integrity" "sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA=="
@@ -5545,10 +5656,32 @@
     "d3-interpolate" "1 - 3"
     "d3-timer" "1 - 3"
 
+"d3-transition@2":
+  "integrity" "sha512-42ltAGgJesfQE3u9LuuBHNbGrI/AJjNL2OAUdclE70UE6Vy239GCBEYD38uBPoLeNsOhFStGpPI0BAOV+HMxog=="
+  "resolved" "https://registry.npmjs.org/d3-transition/-/d3-transition-2.0.0.tgz"
+  "version" "2.0.0"
+  dependencies:
+    "d3-color" "1 - 2"
+    "d3-dispatch" "1 - 2"
+    "d3-ease" "1 - 2"
+    "d3-interpolate" "1 - 2"
+    "d3-timer" "1 - 2"
+
 "d3-voronoi@1":
   "integrity" "sha512-dArJ32hchFsrQ8uMiTBLq256MpnZjeuBtdHpaDlYuQyjU0CVzCJl/BVW+SkszaAeH95D/8gxqAhgx0ouAWAfRg=="
   "resolved" "https://registry.npmjs.org/d3-voronoi/-/d3-voronoi-1.1.4.tgz"
   "version" "1.1.4"
+
+"d3-zoom@^2.0.0":
+  "integrity" "sha512-fFg7aoaEm9/jf+qfstak0IYpnesZLiMX6GZvXtUSdv8RH2o4E2qeelgdU09eKS6wGuiGMfcnMI0nTIqWzRHGpw=="
+  "resolved" "https://registry.npmjs.org/d3-zoom/-/d3-zoom-2.0.0.tgz"
+  "version" "2.0.0"
+  dependencies:
+    "d3-dispatch" "1 - 2"
+    "d3-drag" "2"
+    "d3-interpolate" "1 - 2"
+    "d3-selection" "2"
+    "d3-transition" "2"
 
 "d3-zoom@1":
   "integrity" "sha512-VoLXTK4wvy1a0JpH2Il+F2CiOhVu7VRXWF5M/LroMIh3/zBAC3WAt7QoIvPibOavVo20hN6/37vwAsdBejLyKQ=="
@@ -6165,6 +6298,11 @@
   "integrity" "sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw=="
   "resolved" "https://registry.npmjs.org/dotenv/-/dotenv-8.2.0.tgz"
   "version" "8.2.0"
+
+"double-bits@^1.1.0":
+  "integrity" "sha1-WKu6RUlNpND6Nrc60RoobJGEscY="
+  "resolved" "https://registry.npmjs.org/double-bits/-/double-bits-1.1.1.tgz"
+  "version" "1.1.1"
 
 "download@^6.2.2":
   "integrity" "sha512-DpO9K1sXAST8Cpzb7kmEhogJxymyVUd5qz/vCOSyvwtp2Klj2XcDt5YUuasgxka44SxF0q5RriKIwJmQHG2AuA=="
@@ -7391,6 +7529,23 @@
   "resolved" "https://registry.npmjs.org/function-bind/-/function-bind-1.1.1.tgz"
   "version" "1.1.1"
 
+"function-plot@^1.22.7":
+  "integrity" "sha512-rB6FeVqvgNECmt5PhIvFFEOyEjM9AWLIpMkj9Nzbzq9f81Irgn3ZrXAuv5+qnuzM99jPL7ZM4kK3+ImiKXcSHA=="
+  "resolved" "https://registry.npmjs.org/function-plot/-/function-plot-1.22.7.tgz"
+  "version" "1.22.7"
+  dependencies:
+    "built-in-math-eval" "^0.3.0"
+    "clamp" "^1.0.1"
+    "d3-axis" "^2.0.0"
+    "d3-color" "^2.0.0"
+    "d3-format" "^2.0.0"
+    "d3-interpolate" "^2.0.1"
+    "d3-scale" "^3.2.2"
+    "d3-selection" "^2.0.0"
+    "d3-shape" "^2.0.0"
+    "d3-zoom" "^2.0.0"
+    "interval-arithmetic-eval" "^0.4.7"
+
 "functional-red-black-tree@^1.0.1":
   "integrity" "sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc="
   "resolved" "https://registry.npmjs.org/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz"
@@ -8433,10 +8588,33 @@
     "has" "^1.0.3"
     "side-channel" "^1.0.4"
 
+"internmap@^1.0.0":
+  "integrity" "sha512-lDB5YccMydFBtasVtxnZ3MRBHuaoE8GKsppq+EchKL2U4nK/DmEpPHNH8MZe5HkMtpSiTSOZwfN0tzYjO/lJEw=="
+  "resolved" "https://registry.npmjs.org/internmap/-/internmap-1.0.1.tgz"
+  "version" "1.0.1"
+
 "internmap@1 - 2":
   "integrity" "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg=="
   "resolved" "https://registry.npmjs.org/internmap/-/internmap-2.0.3.tgz"
   "version" "2.0.3"
+
+"interval-arithmetic-eval@^0.4.7":
+  "integrity" "sha512-ClK+N4efbsgjlZR8h0qd0LQbyzUzJ9IkrjmTnD5MVb4Ytebd0lesoVP4AxLclcsEI+nIieskQ8cepHIWUPaRhQ=="
+  "resolved" "https://registry.npmjs.org/interval-arithmetic-eval/-/interval-arithmetic-eval-0.4.7.tgz"
+  "version" "0.4.7"
+  dependencies:
+    "interval-arithmetic" "^1.0.6"
+    "math-codegen" "^0.3.5"
+
+"interval-arithmetic@^1.0.6":
+  "integrity" "sha512-eVotDGYPNiEaJ63oa4CeEHgOczZJ3gNHqG5wfVQ2o8sN2CEczQyR82Sjey/Bp36x8e7PtBcBvitcMnw6VUpjgQ=="
+  "resolved" "https://registry.npmjs.org/interval-arithmetic/-/interval-arithmetic-1.0.6.tgz"
+  "version" "1.0.6"
+  dependencies:
+    "@types/assert" "^1.4.6"
+    "is-safe-integer" "^2.0.0"
+    "nextafter" "^1.0.0"
+    "typedarray" "0.0.6"
 
 "into-stream@^3.1.0":
   "integrity" "sha1-lvsKk2wSur1v8XUqF9BWFqvQlMY="
@@ -8851,6 +9029,13 @@
   "integrity" "sha512-AGOriNp96vNBd3HtU+RzFEc75FfR5ymiYv8E553I71SCeXBiMsVDUtdio1OEFvrPyLIQ9tVR5RxXIFe5PUFjMg=="
   "resolved" "https://registry.npmjs.org/is-root/-/is-root-2.1.0.tgz"
   "version" "2.1.0"
+
+"is-safe-integer@^2.0.0":
+  "integrity" "sha512-eDaA39/1+3SNtYTRP28lRYOHMwiB1gfqXQaXcf/+f4mLwKgm8TTDkwJldsdtbgrK1R5CoDbf6AQ0KqP7BKoGtQ=="
+  "resolved" "https://registry.npmjs.org/is-safe-integer/-/is-safe-integer-2.0.0.tgz"
+  "version" "2.0.0"
+  dependencies:
+    "max-safe-integer" "^1.0.0"
 
 "is-stream@^1.0.0", "is-stream@^1.1.0":
   "integrity" "sha1-EtSj3U5o4Lec6428hBc66A2RykQ="
@@ -10078,6 +10263,19 @@
   dependencies:
     "escape-string-regexp" "^4.0.0"
 
+"math-codegen@^0.3.5":
+  "integrity" "sha1-R5nuRnfe0Ud2bQA8ykt4ee3UDMo="
+  "resolved" "https://registry.npmjs.org/math-codegen/-/math-codegen-0.3.5.tgz"
+  "version" "0.3.5"
+  dependencies:
+    "extend" "^3.0.0"
+    "mr-parser" "^0.2.1"
+
+"max-safe-integer@^1.0.0":
+  "integrity" "sha1-84BgvixWPYwC5tSK85Ei/YO29BA="
+  "resolved" "https://registry.npmjs.org/max-safe-integer/-/max-safe-integer-1.0.1.tgz"
+  "version" "1.0.1"
+
 "md5.js@^1.3.4":
   "integrity" "sha512-xitP+WxNPcTTOgnTJcrhM0xvdPepipPSf3I8EIpGKeFLjt3PlJLIDG3u8EX53ZIubkb+5U2+3rELYpEhHhzdkg=="
   "resolved" "https://registry.npmjs.org/md5.js/-/md5.js-1.3.5.tgz"
@@ -10889,6 +11087,11 @@
     "rimraf" "^2.5.4"
     "run-queue" "^1.0.3"
 
+"mr-parser@^0.2.1":
+  "integrity" "sha1-hhi5ukF+KOn0OaQcaVtVTq/u2Sc="
+  "resolved" "https://registry.npmjs.org/mr-parser/-/mr-parser-0.2.1.tgz"
+  "version" "0.2.1"
+
 "mri@^1.1.0":
   "integrity" "sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA=="
   "resolved" "https://registry.npmjs.org/mri/-/mri-1.2.0.tgz"
@@ -10990,6 +11193,13 @@
   "integrity" "sha1-yobR/ogoFpsBICCOPchCS524NCw="
   "resolved" "https://registry.npmjs.org/next-tick/-/next-tick-1.0.0.tgz"
   "version" "1.0.0"
+
+"nextafter@^1.0.0":
+  "integrity" "sha1-t9d7U1MQ4+CX5gJauwqQNHfsGjo="
+  "resolved" "https://registry.npmjs.org/nextafter/-/nextafter-1.0.0.tgz"
+  "version" "1.0.0"
+  dependencies:
+    "double-bits" "^1.1.0"
 
 "nice-try@^1.0.4":
   "integrity" "sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ=="
@@ -15534,7 +15744,7 @@
   dependencies:
     "is-typedarray" "^1.0.0"
 
-"typedarray@^0.0.6":
+"typedarray@^0.0.6", "typedarray@0.0.6":
   "integrity" "sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c="
   "resolved" "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz"
   "version" "0.0.6"

@@ -1,67 +1,56 @@
+html,
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
+
 body::-webkit-scrollbar {
   width: 6px;
   height: 6px;
-  background-color: #F5F5F5,
+  background-color: #f5f5f5;
 }
 body::-webkit-scrollbar-thumb {
   border-radius: 5px;
   box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-  background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867));
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    from(#30cfd0),
+    to(#330867)
+  );
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
 
+blockquote {
+  border-left: darkgray 0.3rem solid;
+  margin-left: 0;
+  padding-left: 1rem;
+  color: dimgray;
+}
+
 .katex-display {
-  overflow: scroll;
+  width: 100%;
+  overflow-x: scroll;
 }
 .katex-display::-webkit-scrollbar {
   width: 6px;
   height: 6px;
-  background-color: #F5F5F5,
+  background-color: #f5f5f5;
 }
 .katex-display::-webkit-scrollbar-thumb {
   border-radius: 5px;
   box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-  background-image: -webkit-gradient(linear, left bottom, left top, from(#30cfd0), to(#330867));
-}
-
-.overlay {
-  position: fixed;
-  left: 0; top: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(100, 100, 100, .8);
-  z-index: 2147483640;
-}
-
-.modal {
-  position: fixed;
-  left: 10%; top: 20%;
-  width: 80%; height: 60%;
-  padding: 0 auto;
-  background-color: papayawhip;
-  z-index: 2147483646;
-}
-
-.modal-controller {
-  width: 100%; height: 10%;
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: flex-start;
-}
-
-.hidden {
-  display: none;
+  background-image: -webkit-gradient(linear,left bottom,left top,from(#30cfd0),to(#330867));
 }

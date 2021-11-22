@@ -76,9 +76,6 @@ pub fn update_setting(setting: Setting, env: State<'_, Env>) -> Result<Response,
   }
 }
 
-/**
- * TODO -- update Cashe and Tags
- **/
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct SaveDoc {
   overwrite: bool,
@@ -114,19 +111,15 @@ pub fn save_document(
   new_index
     .push(serde_json::to_string(&meta).map_err(|_| Response::client_error("Invalid format."))?);
 
-  let path = setting.path_to_file(&filename);
   OpenOptions::new()
     .write(true)
     .append(false)
     .truncate(true)
     .create_new(!overwrite)
-    .open(path)
+    .open(setting.path_to_file(&filename))
+    .map_err(Response::process_error)?
+    .write_all(&body.as_bytes())
     .map_err(Response::process_error)
-    .and_then(|mut writer| {
-      writer
-        .write_all(&body.as_bytes())
-        .map_err(Response::process_error)
-    })
     .and_then(|_| {
       OpenOptions::new()
         .write(true)
@@ -134,10 +127,7 @@ pub fn save_document(
         .truncate(true)
         .create(false)
         .open(crate::index_path())
-        .map_err(Response::process_error)
-    })
-    .and_then(|mut writer| {
-      writer
+        .map_err(Response::process_error)?
         .write_all(new_index.join("\n").as_bytes())
         .map_err(Response::process_error)
     })
@@ -153,9 +143,6 @@ pub fn save_document(
     })
 }
 
-/**
- * TODO -- update Cashe and Tags
- **/
 #[tauri::command]
 pub fn delete_file(
   target: Meta,
@@ -185,10 +172,7 @@ pub fn delete_file(
         .write(true)
         .truncate(true)
         .open(crate::index_path())
-        .map_err(Response::process_error)
-    })
-    .and_then(|mut writer| {
-      writer
+        .map_err(Response::process_error)?
         .write_all(new_index.join("\n").as_bytes())
         .map_err(Response::process_error)
     })
@@ -209,13 +193,14 @@ pub fn delete_file(
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct RequestDocs {
   offset: usize,
-  limit: usize,
-  filename_start: String,
-  filename_contain: String,
-  created_at: (String, String),
-  updated_at: (String, String),
-  tags: Vec<String>,
-  author: String,
+  limit: usize,                     //if 0, return all satisfied docs meta
+  filename_start: String,           //if empty, ignored
+  filename_contain: String,         //if empty, ignored
+  created_at: (String, String), //left is min, right is max. if invalid format, the one is ignored
+  updated_at: (String, String), //left is min, right is max. if invalid format, the one is ignored
+  tags: Vec<String>,            //if length is 0, ignored
+  author: String,               //if empty, ignored
+  is_html_src_exists: Option<bool>, //if None,  ignored
 }
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ResponseDocs {
@@ -239,21 +224,14 @@ pub fn get_documents_by_filter(
     updated_at,
     tags,
     author,
+    is_html_src_exists,
   } = req;
   let mut lines =
     BufReader::new(File::open(crate::index_path()).map_err(Response::process_error)?).lines();
 
-  if memo.page == 0 {
-    while let Some(line) = lines.next() {
-      if 0 < offset {
-        offset -= 1;
-      }
-      memo.page += 1;
-      let meta = serde_json::from_str::<Meta>(&line.map_err(Response::process_error)?)
-        .map_err(Response::process_error)?;
-      if offset == 0
-        && list.len() < limit
-        && meta.filter_by_filename(&filename_start, &filename_contain)
+  let filter = |meta: &Meta| -> Result<bool, Response> {
+    Ok(
+      meta.filter_by_filename(&filename_start, &filename_contain)
         && meta
           .filter_by_created(&created_at.0, &created_at.1)
           .map_err(Response::process_error)?
@@ -262,7 +240,37 @@ pub fn get_documents_by_filter(
           .map_err(Response::process_error)?
         && meta.filter_by_tags(&tags)
         && meta.filter_by_author(&author)
-      {
+        && meta.filter_by_html_src(is_html_src_exists),
+    )
+  };
+
+  if limit == 0 {
+    while let Some(line) = lines.next() {
+      let line = line.map_err(Response::process_error)?;
+      let meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+      if filter(&meta)? {
+        list.push(meta.clone())
+      }
+      /*
+       * this API functionality is not designed for user interface, but system internal use.
+       * cashe is not updated.
+       */
+    }
+    println!("page: {}, all_tags: {:?}", memo.page, memo.all_tags);
+    Ok(ResponseDocs {
+      list,
+      page: memo.page,
+      all_tags: memo.all_tags.clone(),
+    })
+  } else if memo.page == 0 {
+    while let Some(line) = lines.next() {
+      if 0 < offset {
+        offset -= 1;
+      }
+      memo.page += 1;
+      let line = line.map_err(Response::process_error)?;
+      let meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+      if offset == 0 && list.len() < limit && filter(&meta)? {
         list.push(meta.clone())
       }
       memo.all_tags = memo
@@ -283,18 +291,9 @@ pub fn get_documents_by_filter(
         break;
       }
 
-      let meta = serde_json::from_str::<Meta>(&line.map_err(Response::process_error)?)
-        .map_err(Response::process_error)?;
-      if meta.filter_by_filename(&filename_start, &filename_contain)
-        && meta
-          .filter_by_created(&created_at.0, &created_at.1)
-          .map_err(Response::client_error)?
-        && meta
-          .filter_by_updated(&updated_at.0, &updated_at.1)
-          .map_err(Response::client_error)?
-        && meta.filter_by_tags(&tags)
-        && meta.filter_by_author(&author)
-        && list.len() < limit
+      let line = line.map_err(Response::process_error)?;
+      let meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+      if filter(&meta)? && list.len() < limit
       //must be unnecessary
       {
         if 0 < offset {
@@ -341,7 +340,7 @@ pub fn ls_dir(search: &Path) -> Result<Vec<PathBuf>, Response> {
 /*
  * finish this command don't mean whole process finish.
  * improve response with tauri event.
- */ 
+ */
 #[derive(Debug, PartialEq, serde::Serialize)]
 struct PayloadPDF<'a> {
   meta: Meta,
@@ -358,7 +357,7 @@ pub fn print(meta: Meta, body: &str, hidden: State<'_, HiddenWindow>) -> Result<
 }
 
 #[tauri::command]
-pub fn html(meta: Meta, htmlsrc: &str, path: PathBuf) -> Result<(), Response> {
+pub fn html(mut meta: Meta, htmlsrc: &str, path: PathBuf) -> Result<(), Response> {
   if !path.exists() {
     return Err(Response::client_error("given path can't be found"));
   }
@@ -367,7 +366,22 @@ pub fn html(meta: Meta, htmlsrc: &str, path: PathBuf) -> Result<(), Response> {
     return Err(Response::client_error("given path is not a directory"));
   }
 
-  println!("{:?}\n{}\n{:?}", meta, htmlsrc, path);
+  let lines =
+    BufReader::new(File::open(crate::index_path()).map_err(Response::process_error)?).lines();
+  let mut new_index = vec![];
+  let target_name = meta.get_hashed_filename();
+
+  for line in lines {
+    let line = line.map_err(Response::process_error)?;
+    let meta = serde_json::from_str::<Meta>(&line).map_err(Response::process_error)?;
+    if target_name != meta.get_hashed_filename() {
+      new_index.push(line);
+    }
+  }
+  meta.set_html_src();
+  new_index.push(serde_json::to_string(&meta).map_err(Response::client_error)?);
+
+  println!("html src created with {:?} in {:?}", meta, path);
 
   OpenOptions::new()
     .write(true)
@@ -377,4 +391,15 @@ pub fn html(meta: Meta, htmlsrc: &str, path: PathBuf) -> Result<(), Response> {
     .map_err(Response::process_error)?
     .write_all(htmlsrc.as_bytes())
     .map_err(Response::process_error)
+    .and_then(|_| {
+      OpenOptions::new()
+        .write(true)
+        .append(false)
+        .truncate(true)
+        .create(false)
+        .open(crate::index_path())
+        .map_err(Response::process_error)?
+        .write_all(new_index.join("\n").as_bytes())
+        .map_err(Response::process_error)
+    })
 }

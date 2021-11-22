@@ -25,20 +25,31 @@ class ErrorResponse extends Error {
 
 export type RequestDocs = {
   offset: number;
-  limit?: number;
-  filename_start?: string;
-  filename_contain?: string;
-  created_at?: [string, string];
-  updated_at?: [string, string];
-  tags?: string[];
-  author?: string;
+  limit: number; //if 0, return all satisfied docs meta. so, ignore offset in the case.
+  filename_start?: string; //if empty, ignored
+  filename_contain?: string; //if empty, ignored
+  created_at?: [string, string]; //left is min, right is max. if invalid format, the one is ignored
+  updated_at?: [string, string]; //left is min, right is max. if invalid format, the one is ignored
+  tags?: string[]; //if length is 0, ignored
+  author?: string; //if empty, ignored
+  is_html_src_exists?: boolean | null; //if null,  ignored
 };
 export type ResponseDocs = {
-  list: Meta[];
-  page: number;
+  list: Meta[]; //returned list length will be limit size if limit does not equal to 0
+  page: number; //a total number of documents
   all_tags: string[];
 };
 
+/**
+ * get running environment and change api.
+ * this is future scope for use of this app in a browser.
+ * if finished to setup server and db, possibly replace the all related feature like,
+ * - git repository
+ * - this hooks returning api
+ * - header, footer
+ * - tauri's dist path
+ * - etcetra
+ */
 const useCommand = () => {
   return {
     getSetting: async () => {
@@ -100,6 +111,7 @@ const useCommand = () => {
       updated_at = ["", ""],
       tags = [],
       author = "",
+      is_html_src_exists = null,
     }: RequestDocs) => {
       try {
         return (await invoke("get_documents_by_filter", {
@@ -112,6 +124,7 @@ const useCommand = () => {
             updated_at,
             tags,
             author,
+            is_html_src_exists,
           },
         })) as ResponseDocs;
       } catch (err) {
@@ -140,11 +153,6 @@ const useCommand = () => {
       })) as undefined;
     },
     html: async (meta: Meta, htmlsrc: string, path: string) => {
-      console.log({
-        meta,
-        htmlsrc,
-        path,
-      })
       return (await invoke("html", {
         meta,
         htmlsrc,

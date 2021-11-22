@@ -28,6 +28,11 @@ impl ToString for Language {
   }
 }
 
+/**
+ * should not have inner setting state if considering multiple running process.
+ * get setting by every time with fs.
+ * however, currently not considering such pattern and assuming only one process.
+ */
 #[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Setting {
   target_dir: PathBuf,
@@ -52,8 +57,8 @@ impl Setting {
 }
 impl Default for Setting {
   fn default() -> Self {
-    let commands = vec!["save".to_string(), "insertImage".to_string()];
-    let short_cuts = vec!["Control s".to_string(), "Control i".to_string()];
+    let commands = vec!["save".to_string(), "insertImage".to_string(), "syncDoc".to_string()];
+    let shortcuts = vec!["Control s".to_string(), "Control i".to_string(), "Control l".to_string()];
 
     Setting {
       target_dir: dirs::home_dir()
@@ -67,7 +72,7 @@ impl Default for Setting {
       autosave: None,
       key_bindings: commands
         .into_iter()
-        .zip(short_cuts.into_iter())
+        .zip(shortcuts.into_iter())
         .collect::<HashMap<String, String>>(),
       is_new: true,
     }
@@ -171,7 +176,7 @@ pub fn initialize() -> Env {
     }
   }
 
-  println!("distrobution: {}", whoami::distro());
+  println!("distribution: {}", whoami::distro());
   println!("platform: {}", whoami::platform());
   println!("hello {}!", whoami::username());
   let mut buf = String::new();
@@ -180,7 +185,7 @@ pub fn initialize() -> Env {
     .write(false)
     .append(false)
     .open(conf)
-    .map(|mut file| file.read_to_string(&mut buf).unwrap())
+    .map(|mut file| file.read_to_string(&mut buf).expect("Failed to initialize"))
   {
     Ok(_) => Setting::from_string(&buf).unwrap_or_default(),
     Err(ref e) if e.kind() == ErrorKind::NotFound => Setting::default(),

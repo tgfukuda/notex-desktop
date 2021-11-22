@@ -10,9 +10,9 @@ import {
   reduction,
   Coordinate,
 } from "./D3";
-import useScroll from "../hooks/Scroll";
 import sectionMsg from "../utils/constant/write/section";
 import { useSettings } from "../redux/hooks";
+import scrollRegister from "../utils/lib/scrollRegister";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -29,9 +29,18 @@ import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import mermaid from "mermaid";
 import * as katex from "katex";
 import { v4 as uuidv4 } from "uuid";
+import functionPlot from "function-plot";
+import {
+  FunctionPlotOptions,
+  FunctionPlotDatum,
+} from "function-plot/dist/types";
 
 type CustomMarkdown = React.FunctionComponent<{ text: string }>;
 
+const mermaidContainer = css`
+  width: 80%;
+  margin: 0 auto;
+`;
 const Mermaid: CustomMarkdown = ({ text }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -51,7 +60,7 @@ const Mermaid: CustomMarkdown = ({ text }) => {
     }
   });
 
-  return <div className={"mermaid"} ref={ref} />;
+  return <div className={"mermaid"} ref={ref} css={mermaidContainer} />;
 };
 
 const section = (theme: Theme) =>
@@ -66,24 +75,12 @@ const section = (theme: Theme) =>
   });
 type SectionProps = { id: string | undefined; level: number };
 const Section: React.FC<SectionProps> = ({ id, level, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const { addEl, removeEl } = useScroll();
   const sectionMsgs = sectionMsg(useSettings()["language"]);
-
-  useEffect(() => {
-    if (id) addEl(id, ref);
-
-    return () => {
-      if (id) removeEl(id);
-    };
-    //eslint-disable-next-line
-  }, []);
 
   return (
     <Typography
       id={id}
       variant={("h" + Math.min(6, level + 2)) as Variant}
-      ref={ref}
       css={section}
     >
       {level === 1
@@ -102,59 +99,116 @@ type FunctionGraphData = {
   };
 };
 const Graph: CustomMarkdown = ({ text }) => {
-  const [result, setResult] = useState<Coordinate[]>([]);
+  // const [result, setResult] = useState<Coordinate[]>([]);
+
+  // useEffect(() => {
+  //   const lines = text.split("\n");
+  //   let domain = {} as {
+  //     [key in keyof FunctionGraphData["domain"]]: string;
+  //   };
+  //   let func = "";
+  //   for (const line of lines) {
+  //     if (line.startsWith("min=")) {
+  //       domain.min = line.slice(4).trim();
+  //     } else if (line.startsWith("max=")) {
+  //       domain.max = line.slice(4).trim();
+  //     } else if (line.startsWith("division=")) {
+  //       domain.division = line.slice(9).trim();
+  //     } else if (line.startsWith("func=")) {
+  //       func = line.slice(5).trim();
+  //     }
+  //   }
+
+  //   const min =
+  //     Number.isNaN(domain.min) || Number(domain.max) <= Number(domain.min)
+  //       ? 0
+  //       : Number(domain.min);
+  //   const max =
+  //     Number.isNaN(domain.max) || Number(domain.max) <= Number(domain.min)
+  //       ? 1
+  //       : Number(domain.max);
+  //   const division =
+  //     !Number.isInteger(Number(domain.division)) || Number(domain.division) < 2
+  //       ? 100
+  //       : Number(domain.division);
+
+  //   let parseResult: ParseResult = 0;
+  //   try {
+  //     parseResult = parseFormula(func);
+  //   } catch (err) {
+  //     console.error((err as Error).message);
+  //   }
+  //   const reducer = reduction(parseResult);
+
+  //   setResult(
+  //     [...new Array(division)].map((_, i) => {
+  //       const x = min + (i / division) * (max - min);
+  //       const y = reducer(x);
+  //       return { x, y };
+  //     })
+  //   );
+  // }, [text]);
+
+  // return <FunctionD3 data={result} />;
+  const plotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("graph");
+    if (plotRef.current) {
+      const options = {
+        width: plotRef.current.getBoundingClientRect().width,
+      } as FunctionPlotOptions;
+      const lines = text.split("\n");
+      let parseMode: "function" | "implicit" | "parametric" = "function";
+      let defaultOption = {
+        nSamples: 100,
+      } as FunctionPlotDatum;
+      const data = [] as FunctionPlotDatum[];
 
-    const lines = text.split("\n");
-    let domain = {} as {
-      [key in keyof FunctionGraphData["domain"]]: string;
-    };
-    let func = "";
-    for (const line of lines) {
-      if (line.startsWith("min=")) {
-        domain.min = line.slice(4).trim();
-      } else if (line.startsWith("max=")) {
-        domain.max = line.slice(4).trim();
-      } else if (line.startsWith("division=")) {
-        domain.division = line.slice(9).trim();
-      } else if (line.startsWith("func=")) {
-        func = line.slice(5).trim();
+      for (const line of lines) {
+        if (
+          line === "function" ||
+          line === "implicit" ||
+          line === "parametric"
+        ) {
+          parseMode = line;
+          continue;
+        }
+
+        if (parseMode === "function") {
+          data.push({
+            ...defaultOption,
+            fn: line,
+            fnType: "linear",
+            graphType: "polyline"
+          } as FunctionPlotDatum);
+        } else if (parseMode === "implicit") {
+          data.push({
+            ...defaultOption,
+            fn: line,
+            fnType: "implicit",
+          });
+        } else if (parseMode === "parametric") {
+          try {
+            const param = JSON.parse(line) as { x: string; y: string };
+            data.push({
+              ...defaultOption,
+              ...param,
+              fnType: "parametric",
+              graphType: "polyline"
+            });
+          } catch (err) {
+            console.error(err)
+          }
+        }
       }
+      options.data = data
+      console.log(data)
+
+      functionPlot(Object.assign({}, options, { target: plotRef.current }));
     }
+  }, []);
 
-    const min =
-      Number.isNaN(domain.min) || Number(domain.max) <= Number(domain.min)
-        ? 0
-        : Number(domain.min);
-    const max =
-      Number.isNaN(domain.max) || Number(domain.max) <= Number(domain.min)
-        ? 1
-        : Number(domain.max);
-    const division =
-      !Number.isInteger(Number(domain.division)) || Number(domain.division) < 2
-        ? 100
-        : Number(domain.division);
-
-    let parseResult: ParseResult = 0;
-    try {
-      parseResult = parseFormula(func);
-    } catch (err) {
-      console.error((err as Error).message);
-    }
-    const reducer = reduction(parseResult);
-
-    setResult(
-      [...new Array(division)].map((_, i) => {
-        const x = min + (i / division) * (max - min);
-        const y = reducer(x);
-        return { x, y };
-      })
-    );
-  }, [text]);
-
-  return <FunctionD3 data={result} />;
+  return <div ref={plotRef} css={mermaidContainer} />;
 };
 
 const whiteSpace = css({
@@ -256,12 +310,12 @@ const tableCellBase = (theme: Theme) => css`
   min-height: 2rem;
   margin: 0;
   padding: ${theme.spacing(1, 1)};
-  background-color: rgba(200, 200, 200, 0.25);
   border-style: solid;
   border-color: ${theme.palette.divider};
   border-width: 0.5px;
+  transition: background 1s;
   &:hover {
-    background-color: rgba(200, 200, 200, 0.05);
+    opacity: 0.7;
   }
 `;
 const globalTableStyle = (theme: Theme) => css`
@@ -304,21 +358,28 @@ const paragraph = (theme: Theme) => css`
   width: 100%;
   margin: ${theme.spacing(0, 0, 2)};
   padding: 0;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: normal;
 `;
 type MarkdownProps = {
   md: string;
   container?: React.RefObject<HTMLDivElement>;
+  renderScript?: boolean;
 };
 const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ md, container }, ref) => {
-    const { pickEl } = useScroll(container?.current || undefined);
-
     useEffect(() => {
       mermaid.initialize({
         startOnLoad: true,
         theme: "neutral",
       });
-    }, []);
+
+      /**
+       * if container will be used for other purpose, should set scroll container props
+       */
+      scrollRegister(container?.current);
+    }, [container]);
 
     return (
       <div className={"markdown"} ref={ref}>
@@ -409,29 +470,21 @@ const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
                 {children}
               </Section>
             ),
-            p: ({ children }) => <div css={paragraph}>{children}</div>,
             table: ({ node, children, ...props }) => (
               <div css={tableContainer}>
                 <table {...props}>{children}</table>
               </div>
             ),
-            a: ({ node, href, children, id, ...props }) => {
+            a: ({ node, href, children, ...props }) => {
               if (href && href[0] === "#") {
                 return (
-                  <a
-                    {...props}
-                    id={id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      pickEl(href.slice(1));
-                    }}
-                  >
+                  <a href={"javascript:" + href + ";"} {...props}>
                     {children}
                   </a>
                 );
               } else {
                 return (
-                  <a href={href} {...props}>
+                  <a href={href} {...props} rel={"noreferrer"}>
                     {children}
                   </a>
                 );
@@ -441,7 +494,11 @@ const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
               <img
                 {...props}
                 alt={alt ?? "maybe invalid format or unavailable url"}
-                width={"100%"}
+                width={"50%"}
+                height={"auto"}
+                css={css`
+                  margin: 0 auto;
+                `}
               />
             ),
             code: ({ node, inline, className, children, ref, ...props }) => {
@@ -475,7 +532,7 @@ const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
           remarkPlugins={[
             remarkGfm,
             remarkMath,
-            remarkToc,
+            [remarkToc, { tight: true }],
             remarkDirective,
             customMarker,
           ]}

@@ -236,22 +236,11 @@ const Controler: React.FC<ControlerProps> = ({
   );
 };
 
-type ColumnProps = {
-  width: number;
+type MetaDisplay = {
   field: keyof Omit<Meta, "shortcut">;
+  width?: number; //width provided property dispalayed on header
 };
-const Column: React.FC<ColumnProps> = ({ width, field }) => {
-  const theme = useTheme();
-  const msgs = browseMsg(useSettings().language);
-
-  return (
-    <Grid item css={row(width, theme)}>
-      {msgs[field]}
-    </Grid>
-  );
-};
-
-const columns: MetaDisplay[] = [
+const fields: MetaDisplay[] = [
   {
     field: "filename",
     width: 60,
@@ -260,11 +249,38 @@ const columns: MetaDisplay[] = [
     field: "tags",
     width: 30,
   },
+  {
+    field: "created_at",
+  },
+  {
+    field: "updated_at",
+  },
+  {
+    field: "author",
+  },
+  {
+    field: "html_src",
+  },
 ];
+
+type ColumnProps = {
+  column: MetaDisplay & { width: number };
+};
+const Column: React.FC<ColumnProps> = ({ column }) => {
+  const theme = useTheme();
+  const msgs = browseMsg(useSettings().language);
+
+  return (
+    <Grid item css={row(column.width, theme)}>
+      {msgs[column.field]}
+    </Grid>
+  );
+};
+
 type RowHeaderProps = {
   idx: number;
   meta: Meta;
-  column: MetaDisplay;
+  column: MetaDisplay & { width: number };
 };
 const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
   const theme = useTheme();
@@ -298,32 +314,6 @@ const RowHeader: React.FC<RowHeaderProps> = ({ idx, meta, column }) => {
   }
 };
 
-type MetaDisplay = {
-  field: keyof Omit<Meta, "shortcut">;
-  width: number;
-};
-const details: MetaDisplay[] = [
-  {
-    field: "filename",
-    width: 60,
-  },
-  {
-    field: "tags",
-    width: 30,
-  },
-  {
-    field: "created_at",
-    width: 17,
-  },
-  {
-    field: "updated_at",
-    width: 17,
-  },
-  {
-    field: "author",
-    width: 10,
-  },
-];
 type RowDetailProps = {
   idx: number;
   meta: Meta;
@@ -346,7 +336,7 @@ const RowDetail: React.FC<RowDetailProps> = ({
 
   return (
     <Grid container direction={"column"} component={AccordionDetails}>
-      {details.map((detail) => {
+      {fields.map((detail) => {
         switch (detail.field) {
           case "tags":
             return (
@@ -368,7 +358,7 @@ const RowDetail: React.FC<RowDetailProps> = ({
                 item
                 key={"row_detail_property_" + detail.field + "_of_" + idx}
               >
-                {msgs[detail.field]} : {meta[detail.field]}
+                {msgs[detail.field]} : {String(meta[detail.field])}
               </Grid>
             );
         }
@@ -505,13 +495,16 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
         justifyContent={"flex-start"}
         css={full}
       >
-        {columns.map((column) => (
-          <Column
-            field={column.field}
-            width={column.width}
-            key={"column_property_" + column.field + "_main"}
-          />
-        ))}
+        {fields.map((column) =>
+          typeof column.width === "number" ? (
+            <Column
+              column={column as MetaDisplay & { width: number }}
+              key={"column_property_" + column.field + "_main"}
+            />
+          ) : (
+            <React.Fragment />
+          )
+        )}
       </Grid>
       {list.map((meta, idx) => (
         <Grid item css={full} key={"row_values_" + meta.filename + "_main"}>
@@ -540,20 +533,24 @@ const Files: React.FC<FilesProps> = ({ list, handleLoad }) => {
               aria-controls={"controll_row_of_" + meta.filename}
               id={"controll_row_of_" + meta.filename}
             >
-              {columns.map((column) => (
-                <RowHeader
-                  idx={idx}
-                  meta={meta}
-                  column={column}
-                  key={
-                    "table_value_" +
-                    meta.filename +
-                    "_" +
-                    column.field +
-                    "_main_"
-                  }
-                />
-              ))}
+              {fields.map((column) =>
+                typeof column.width === "number" ? (
+                  <RowHeader
+                    idx={idx}
+                    meta={meta}
+                    column={column as MetaDisplay & { width: number }}
+                    key={
+                      "table_value_" +
+                      meta.filename +
+                      "_" +
+                      column.field +
+                      "_main_"
+                    }
+                  />
+                ) : (
+                  <React.Fragment />
+                )
+              )}
             </Grid>
             <RowDetail
               idx={idx}
@@ -601,6 +598,7 @@ const Browse: React.FC = () => {
     updated_at: ["", ""],
     tags: [],
     author: "",
+    is_html_src_exists: null,
   });
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import React, {
   useState,
   useContext,
@@ -5,6 +6,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
+import { css } from "@emotion/react";
 
 const ModalContext = createContext([() => {}, false, () => {}, () => {}] as [
   React.Dispatch<React.SetStateAction<any>>,
@@ -13,6 +15,25 @@ const ModalContext = createContext([() => {}, false, () => {}, () => {}] as [
   () => void
 ]);
 
+const overlay = css`
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(100, 100, 100, 0.8);
+  z-index: 2147483640;
+`;
+const modalMain = css`
+  position: fixed;
+  left: 10%;
+  top: 20%;
+  width: 80%;
+  height: 60%;
+  padding: 0 auto;
+  background-color: papayawhip;
+  z-index: 2147483646;
+`;
 export const ModalContextProvider: React.FC = ({ children }) => {
   const [hidden, setHidden] = useState(true);
   const [modal, setModal] = useState<JSX.Element | null>(null);
@@ -34,8 +55,14 @@ export const ModalContextProvider: React.FC = ({ children }) => {
 
   return (
     <ModalContext.Provider value={value}>
-      <div className={"overlay" + (hidden ? " hidden" : "")} onClick={exit}>
-        <div className={"modal"} onClick={(e) => e.stopPropagation()}>
+      <div
+        onClick={exit}
+        css={css`
+          ${overlay}
+          display: ${hidden ? "none" : "block"}
+        `}
+      >
+        <div onClick={(e) => e.stopPropagation()} css={modalMain}>
           {modal}
         </div>
       </div>

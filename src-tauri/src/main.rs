@@ -9,7 +9,7 @@ use app::{
   cmd::{self, Response},
   Casher, HiddenWindow, MainWindow,
 };
-use std::{thread, time};
+use std::{fs, thread, time};
 use tauri::{CustomMenuItem, Manager, Menu, Window, WindowEvent};
 
 /*
@@ -28,14 +28,22 @@ fn emit_fail(main_window: &Window, err: Response) {
   }
 }
 
+#[derive(Debug, PartialEq, serde::Serialize)]
+struct Template<'a> {
+  html: &'a str,
+  css: &'a str,
+  js: &'a str,
+}
+
 fn main() {
   let fail_msg = "error while running tauri application";
   let main_menu = {
-    let browse = CustomMenuItem::new(String::from("browse"), "Browse");
     let new = CustomMenuItem::new(String::from("new"), "New");
+    let browse = CustomMenuItem::new(String::from("browse"), "Browse");
     let setting = CustomMenuItem::new(String::from("setting"), "Setting");
     Menu::new().add_item(new).add_item(browse).add_item(setting)
   };
+  let context = tauri::generate_context!();
 
   tauri::Builder::default()
     .menu(main_menu)
@@ -45,21 +53,19 @@ fn main() {
       main_window.on_menu_event(move |e| {
         println!("eventId: {}", e.menu_item_id());
         match e.menu_item_id() {
-          "new" => {
-            match main_window_.emit("routing", "/write") {
-              Ok(()) => (),
-              Err(err) => println!("{}", err)
-            }
+          "new" => match main_window_.emit("routing", "/write") {
+            Ok(()) => (),
+            Err(err) => println!("{}", err),
           },
           "browse" => match main_window_.emit("routing", "/browse") {
             Ok(()) => (),
-            Err(err) => println!("{}", err)
+            Err(err) => println!("{}", err),
           },
           "setting" => match main_window_.emit("routing", "/setting") {
             Ok(()) => (),
-            Err(err) => println!("{}", err)
+            Err(err) => println!("{}", err),
           },
-          _ => ()
+          _ => (),
         }
       });
 
@@ -77,7 +83,7 @@ fn main() {
             emit_success(&main_window_, Response::new("preparing printer..."));
             thread::sleep(time::Duration::from_millis(2000));
             /*
-             * if hidden window would not show once, the page execution is still not complete
+             * if hidden window would not be showed once, the page execution is still not complete
              * though the reason is unknown.
              * the problem may be tauri's hidden window processing but not sure (also may be frontend implementation).
              * need splitting process more to get what the problem is.
@@ -94,6 +100,42 @@ fn main() {
             emit_fail(&main_window_, Response::process_error(status))
           }
         }
+      });
+
+      let html = fs::read_to_string(
+        app
+          .path_resolver()
+          .resource_dir()
+          .expect("unknown error")
+          .join("assets/template.html"),
+      )
+      .unwrap();
+      let css = fs::read_to_string(
+        app
+          .path_resolver()
+          .resource_dir()
+          .expect("unknown error")
+          .join("assets/template.css"),
+      )
+      .unwrap()
+      .replace("\n", "");
+      let js = fs::read_to_string(
+        app
+          .path_resolver()
+          .resource_dir()
+          .expect("unknown error")
+          .join("assets/template.js"),
+      )
+      .unwrap()
+      .replace("\n", "");
+      let main_window_ = main_window.clone();
+      main_window.listen("template", move |_| {
+        let html = &html;
+        let css = &css;
+        let js = &js;
+        main_window_
+          .emit("return_template", Template { html, css, js })
+          .unwrap();
       });
 
       let main_window_ = main_window.clone();
@@ -125,6 +167,6 @@ fn main() {
       cmd::print,
       cmd::html
     ])
-    .run(tauri::generate_context!())
+    .run(context)
     .expect(fail_msg);
 }
